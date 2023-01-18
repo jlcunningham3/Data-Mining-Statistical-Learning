@@ -1,0 +1,16 @@
+---
+title: "Exercise 1"
+author: "Jack Cunningham"
+date: "2023-01-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(broom)
+library(knitr)
+library(haven)
+```
+
