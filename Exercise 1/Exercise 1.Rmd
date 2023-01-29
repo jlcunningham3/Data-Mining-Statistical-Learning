@@ -17,6 +17,7 @@ library(rsample)
 library(caret)
 library(modelr)
 library(parallel)
+library(ipred)
 library(foreach)
 library(scales)
 ABIA = read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 1/ABIA.csv")
@@ -87,281 +88,99 @@ ggplot(data = ABIA, aes(x=CRSDepTime, y=LateAircraftDelay)) +
 
 *Which trim yields a larger optimal value of K? Why do you think this is?*
 
+&nbsp;
+
 ```{r 3.1}
-# Create filtered datasets
-sclass350 = sclass %>%
-  filter(trim=="350")
-sclass65AMG = sclass %>%
-  filter(trim=="65 AMG")
+#Create data frames, plot RMSE by k-value
 
-# Make train-test splits
-sclass350_split =  initial_split(sclass350, prop=0.8)
-sclass350_train = training(sclass350_split)
-sclass350_test  = testing(sclass350_split)
+######trim==65AMG
+data_65AMG=sclass%>%
+  filter(trim=='65 AMG')
+group_split65 = initial_split(data_65AMG, prop=0.8)
+group_train65 = training(group_split65)
+group_test65 = testing(group_split65)
 
-sclass65AMG_split =  initial_split(sclass65AMG, prop=0.8)
-sclass65AMG_train = training(sclass65AMG_split)
-sclass65AMG_test  = testing(sclass65AMG_split)
 
-# KNN 350 with K = 2
-knn350_2 = knnreg(price ~ mileage, data=sclass350_train, k=2)
-rmse350_2 <- modelr::rmse(knn350_2, sclass350_test)
+k_65 = c(2, 4, 6, 8, 10, 15, 20, 25, 30, 35, 40, 45,
+           50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200, 233)
 
-# KNN 350 with K = 4
-knn350_4 = knnreg(price ~ mileage, data=sclass350_train, k=4)
-rmse350_4 <- modelr::rmse(knn350_4, sclass350_test)
+rmse_65 = foreach(kk=k_65, .combine='rbind') %do% {
+  knn_65 = knnreg(price~mileage, data=group_train65, k=kk)
+  modelr::rmse(knn_65, data=group_test65)
+}
 
-# KNN 350 with K = 6
-knn350_6 = knnreg(price ~ mileage, data=sclass350_train, k=6)
-rmse350_6 <- modelr::rmse(knn350_6, sclass350_test)
+df65 <- data.frame(x = k_65, y = rmse_65)
+ggplot(df65) +
+  geom_point(aes(x = k_65, y = rmse_65)) +
+  labs(x="K value",
+       y="Root Mean Squared Error",
+       title="RMSE by K-value, 65 AMG Trim") 
 
-# KNN 350 with K = 8
-knn350_8 = knnreg(price ~ mileage, data=sclass350_train, k=8)
-rmse350_8 <- modelr::rmse(knn350_8, sclass350_test)
+######trim==350
 
-# KNN 350 with K = 10
-knn350_10 = knnreg(price ~ mileage, data=sclass350_train, k=10)
-rmse350_10 <- modelr::rmse(knn350_10, sclass350_test)
+data_350=sclass%>%
+  filter(trim=='350')
+group_split350 = initial_split(data_350, prop=0.8)
+group_train350 = training(group_split350)
+group_test350 = testing(group_split350)
+k_350 = c(2, 4, 6, 8, 10, 15, 20, 25, 30, 35, 40, 45,
+         50, 55, 60, 65, 70, 80, 90, 100, 120, 140, 160, 180, 200, 250, 300)
 
-# KNN 350 with K = 15
-knn350_15 = knnreg(price ~ mileage, data=sclass350_train, k=15)
-rmse350_15 <- modelr::rmse(knn350_15, sclass350_test)
 
-# KNN 350 with K = 20
-knn350_20 = knnreg(price ~ mileage, data=sclass350_train, k=20)
-rmse350_20 <- modelr::rmse(knn350_20, sclass350_test)
+rmse_350 = foreach(kk =k_350, .combine='rbind') %do% {
+  knn_350 = knnreg(price~mileage, data=group_train350, k=kk)
+  modelr::rmse(knn_350, data=group_test350)
+}
 
-# KNN 350 with K = 25
-knn350_25 = knnreg(price ~ mileage, data=sclass350_train, k=25)
-rmse350_25 <- modelr::rmse(knn350_25, sclass350_test)
+df350 <- data.frame(x = k_350, y = rmse_350)
+ggplot(df350) +
+  geom_point(aes(x = k_350, y = rmse_350)) + 
+  labs(x="K value",
+       y="Root Mean Squared Error",
+       title="RMSE by K-value, 65 AMG Trim") 
 
-# KNN 350 with K = 30
-knn350_30 = knnreg(price ~ mileage, data=sclass350_train, k=20)
-rmse350_30 <- modelr::rmse(knn350_30, sclass350_test)
-
-# KNN 350 with K = 35
-knn350_35 = knnreg(price ~ mileage, data=sclass350_train, k=35)
-rmse350_35 <- modelr::rmse(knn350_35, sclass350_test)
-
-# KNN 350 with K = 40
-knn350_40 = knnreg(price ~ mileage, data=sclass350_train, k=40)
-rmse350_40 <- modelr::rmse(knn350_40, sclass350_test)
-
-# KNN 350 with K = 45
-knn350_45 = knnreg(price ~ mileage, data=sclass350_train, k=45)
-rmse350_45 <- modelr::rmse(knn350_45, sclass350_test)
-
-# KNN 350 with K = 50
-knn350_50 = knnreg(price ~ mileage, data=sclass350_train, k=50)
-rmse350_50 <- modelr::rmse(knn350_50, sclass350_test)
-
-# KNN 350 with K = 60
-knn350_60 = knnreg(price ~ mileage, data=sclass350_train, k=60)
-rmse350_60 <- modelr::rmse(knn350_60, sclass350_test)
-
-# KNN 350 with K = 70
-knn350_70 = knnreg(price ~ mileage, data=sclass350_train, k=70)
-rmse350_70 <- modelr::rmse(knn350_70, sclass350_test)
-
-# KNN 350 with K = 80
-knn350_80 = knnreg(price ~ mileage, data=sclass350_train, k=80)
-rmse350_80 <- modelr::rmse(knn350_80, sclass350_test)
-
-# KNN 350 with K = 90
-knn350_90 = knnreg(price ~ mileage, data=sclass350_train, k=90)
-rmse350_90 <- modelr::rmse(knn350_90, sclass350_test)
-
-# KNN 350 with K = 100
-knn350_100 = knnreg(price ~ mileage, data=sclass350_train, k=100)
-rmse350_100 <- modelr::rmse(knn350_100, sclass350_test)
-
-# KNN 350 with K = 125
-knn350_125 = knnreg(price ~ mileage, data=sclass350_train, k=125)
-rmse350_125 <- modelr::rmse(knn350_125, sclass350_test)
-
-# KNN 350 with K = 150
-knn350_150 = knnreg(price ~ mileage, data=sclass350_train, k=150)
-rmse350_150 <- modelr::rmse(knn350_150, sclass350_test)
-
-# KNN 350 with K = 175
-knn350_175 = knnreg(price ~ mileage, data=sclass350_train, k=175)
-rmse350_175 <- modelr::rmse(knn350_175, sclass350_test)
-
-# KNN 350 with K = 200
-knn350_200 = knnreg(price ~ mileage, data=sclass350_train, k=200)
-rmse350_200 <- modelr::rmse(knn350_200, sclass350_test)
-
-# KNN 350 with K = 250
-knn350_250 = knnreg(price ~ mileage, data=sclass350_train, k=250)
-rmse350_250 <- modelr::rmse(knn350_250, sclass350_test)
-
-# KNN 350 with K = 300
-knn350_300 = knnreg(price ~ mileage, data=sclass350_train, k=300)
-rmse350_300 <- modelr::rmse(knn350_300, sclass350_test)
-
-# KNN 65AMG with K = 2
-knn65AMG_2 = knnreg(price ~ mileage, data=sclass65AMG_train, k=2)
-rmse65_2 <- modelr::rmse(knn65AMG_2, sclass65AMG_test)
-
-# KNN 350 with K = 4
-knn65AMG_4 = knnreg(price ~ mileage, data=sclass65AMG_train, k=4)
-rmse65_4 <- modelr::rmse(knn65AMG_4, sclass65AMG_test)
-
-# KNN 65AMG with K = 6
-knn65AMG_6 = knnreg(price ~ mileage, data=sclass65AMG_train, k=6)
-rmse65_6 <- modelr::rmse(knn65AMG_6, sclass65AMG_test)
-
-# KNN 65AMG with K = 8
-knn65AMG_8 = knnreg(price ~ mileage, data=sclass65AMG_train, k=8)
-rmse65_8 <- modelr::rmse(knn65AMG_8, sclass65AMG_test)
-
-# KNN 65AMG with K = 10
-knn65AMG_10 = knnreg(price ~ mileage, data=sclass65AMG_train, k=10)
-rmse65_10 <- modelr::rmse(knn65AMG_10, sclass65AMG_test)
-
-# KNN 65AMG with K = 15
-knn65AMG_15 = knnreg(price ~ mileage, data=sclass65AMG_train, k=15)
-rmse65_15 <- modelr::rmse(knn65AMG_15, sclass65AMG_test)
-
-# KNN 65AMG with K = 20
-knn65AMG_20 = knnreg(price ~ mileage, data=sclass65AMG_train, k=20)
-rmse65_20 <- modelr::rmse(knn65AMG_20, sclass65AMG_test)
-
-# KNN 65AMG with K = 25
-knn65AMG_25 = knnreg(price ~ mileage, data=sclass65AMG_train, k=25)
-rmse65_25 <- modelr::rmse(knn65AMG_25, sclass65AMG_test)
-
-# KNN 65AMG with K = 30
-knn65AMG_30 = knnreg(price ~ mileage, data=sclass65AMG_train, k=20)
-rmse65_30 <- modelr::rmse(knn65AMG_30, sclass65AMG_test)
-
-# KNN 65AMG with K = 35
-knn65AMG_35 = knnreg(price ~ mileage, data=sclass65AMG_train, k=35)
-rmse65_35 <- modelr::rmse(knn65AMG_35, sclass65AMG_test)
-
-# KNN 65AMG with K = 40
-knn65AMG_40 = knnreg(price ~ mileage, data=sclass65AMG_train, k=40)
-rmse65_40 <- modelr::rmse(knn65AMG_40, sclass65AMG_test)
-
-# KNN 65AMG with K = 45
-knn65AMG_45 = knnreg(price ~ mileage, data=sclass65AMG_train, k=45)
-rmse65_45 <- modelr::rmse(knn65AMG_45, sclass65AMG_test)
-
-# KNN 65AMG with K = 50
-knn65AMG_50 = knnreg(price ~ mileage, data=sclass65AMG_train, k=50)
-rmse65_50 <- modelr::rmse(knn65AMG_50, sclass65AMG_test)
-
-# KNN 65AMG with K = 60
-knn65AMG_60 = knnreg(price ~ mileage, data=sclass65AMG_train, k=60)
-rmse65_60 <- modelr::rmse(knn65AMG_60, sclass65AMG_test)
-
-# KNN 65AMG with K = 70
-knn65AMG_70 = knnreg(price ~ mileage, data=sclass65AMG_train, k=70)
-rmse65_70 <- modelr::rmse(knn65AMG_70, sclass65AMG_test)
-
-# KNN 65AMG with K = 80
-knn65AMG_80 = knnreg(price ~ mileage, data=sclass65AMG_train, k=80)
-rmse65_80 <- modelr::rmse(knn65AMG_80, sclass65AMG_test)
-
-# KNN 65AMG with K = 90
-knn65AMG_90 = knnreg(price ~ mileage, data=sclass65AMG_train, k=90)
-rmse65_90 <- modelr::rmse(knn65AMG_90, sclass65AMG_test)
-
-# KNN 65AMG with K = 100
-knn65AMG_100 = knnreg(price ~ mileage, data=sclass65AMG_train, k=100)
-rmse65_100 <- modelr::rmse(knn65AMG_100, sclass65AMG_test)
-
-# KNN 65AMG with K = 125
-knn65AMG_125 = knnreg(price ~ mileage, data=sclass65AMG_train, k=125)
-rmse65_125 <- modelr::rmse(knn65AMG_125, sclass65AMG_test)
-
-# KNN 65AMG with K = 150
-knn65AMG_150 = knnreg(price ~ mileage, data=sclass65AMG_train, k=150)
-rmse65_150 <- modelr::rmse(knn65AMG_150, sclass65AMG_test)
-
-# KNN 65AMG with K = 175
-knn65AMG_175 = knnreg(price ~ mileage, data=sclass65AMG_train, k=175)
-rmse65_175 <- modelr::rmse(knn65AMG_175, sclass65AMG_test)
-
-# KNN 65AMG with K = 200
-knn65AMG_200 = knnreg(price ~ mileage, data=sclass65AMG_train, k=200)
-rmse65_200 <- modelr::rmse(knn65AMG_200, sclass65AMG_test)
-
-# KNN 65AMG with K = 233
-knn65AMG_233 = knnreg(price ~ mileage, data=sclass65AMG_train, k=233)
-rmse65_233 <- modelr::rmse(knn65AMG_233, sclass65AMG_test)
-
+k350_35 = knnreg(price~mileage, data=group_train350, k=35)
+  modelr::rmse(k350_35, data=group_test350)
+  
+k65_20 = knnreg(price~mileage, data=group_train65, k=20)
+  modelr::rmse(k65_20, data=group_test65)
 ```
 
-&nbsp;
 
 ```{r 3.2}
-#Create data frames
+#Plot fitted models
 
-k_grid1 <- c("2", "4", "6", "8", "10", "15", "20", "25", "30", "35", "40", "45",
-           "50", "60", "70", "80", "90", "100", "125", "150", "175", "200", "250", "300")
-rmse350 <- c(rmse350_2, rmse350_4, rmse350_6, rmse350_8, rmse350_10, rmse350_15, 
-           rmse350_20, rmse350_25, rmse350_30, rmse350_35, rmse350_40, 
-           rmse350_45, rmse350_50, rmse350_60, rmse350_70, rmse350_80, rmse350_90,
-           rmse350_100, rmse350_125, rmse350_150, rmse350_175, rmse350_200,
-           rmse350_250, rmse350_300)
+group_test65 = group_test65 %>%
+  mutate(price_pred = predict(k65_20, group_test65))
 
-df_350 <- data.frame(k_grid1, rmse350)
-
-k_grid2 <- c("2", "4", "6", "8", "10", "15", "20", "25", "30", "35", "40", "45",
-           "50", "60", "70", "80", "90", "100", "125", "150", "175", "200", "233")
-rmse65 <- c(rmse65_2, rmse65_4, rmse65_6, rmse65_8, rmse65_10, rmse65_15, 
-           rmse65_20, rmse65_25, rmse65_30, rmse65_35, rmse65_40, 
-           rmse65_45, rmse65_50, rmse65_60, rmse65_70, rmse65_80, rmse65_90,
-           rmse65_100, rmse65_125, rmse65_150, rmse65_175, rmse65_200,
-           rmse65_233)
-
-df_65 <- data.frame(k_grid2, rmse65)
-
-ggplot(df_350) + 
-  geom_col(aes(x = fct_inorder(k_grid1), y = rmse350)) +
-  labs(x="K value",
-       y="Root Mean Squared Error",
-       title="RMSE by K-value, 350 Trim") +
-  coord_cartesian(ylim=c(8000, 20000))
-
-ggplot(df_65) + 
-  geom_col(aes(x = fct_inorder(k_grid2), y = rmse65)) +
-  labs(x="K value",
-       y="Root Mean Squared Error",
-       title="RMSE by K-value, 65 AMG Trim") +
-  coord_cartesian(ylim=c(20000, 90000))
-```
-
-
-```{r 3.3}
-sclass350_test = sclass350_test %>%
-  mutate(price_pred = predict(knn350_15, sclass350_test))
-
-p_test350 = ggplot(data = sclass350_test) + 
+p_test65 = ggplot(data = group_test65) + 
   geom_point(mapping = aes(x = mileage, y = price), alpha=0.5) +
   scale_y_continuous(name="Price ($)", labels = comma) +
   scale_x_continuous(name="Mileage", labels = comma) + 
-  labs(title="Fitted Model for 350 Trim with K = 15") +
+  labs(title="Fitted Model for 65 AMG Trim with K = 20") +
+  geom_line(aes(x = mileage, y = price_pred), color='red', linewidth=1.5)
+p_test65
+
+group_test350 = group_test350 %>%
+  mutate(price_pred = predict(k350_35, group_test350))
+
+p_test350 = ggplot(data = group_test350) + 
+  geom_point(mapping = aes(x = mileage, y = price), alpha=0.5) +
+  scale_y_continuous(name="Price ($)", labels = comma) +
+  scale_x_continuous(name="Mileage", labels = comma) + 
+  labs(title="Fitted Model for 350 Trim with K = 35") +
   geom_line(aes(x = mileage, y = price_pred), color='red', linewidth=1.5)
 p_test350
-
-sclass65AMG_test = sclass65AMG_test %>%
-  mutate(price_pred = predict(knn65AMG_10, sclass65AMG_test))
-
-p_test65AMG = ggplot(data = sclass65AMG_test) + 
-  geom_point(mapping = aes(x = mileage, y = price), alpha=0.5) +
-  scale_y_continuous(name="Price ($)", labels = comma) +
-  scale_x_continuous(name="Mileage", labels = comma) + 
-  labs(title="Fitted Model for 65 AMG Trim with K = 10") +
-  geom_line(aes(x = mileage, y = price_pred), color='red', linewidth=1.5)
-p_test65AMG
 ```
 
 &nbsp;
 
-RMSE is minimized for the 350 trim at K = 15, with an RMSE value of 10,821.
+RMSE is minimized for the 350 trim at K = 35, with an RMSE value of 9,290.
 
-For the 65 AMG trim, RMSE is minimized at K = 10, with a value of 20,217.
+For the 65 AMG trim, RMSE is minimized at K = 20, with a value of 20,941.
 
-The 350 trim yields a larger optimal value of K, 15 vs. 10. This is likely due to a larger sample size. The dataset contains 417 vehicles with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more data points nearby, we can afford a higher K-value, since the bias is offset by the higher concentration of data points in each "neighborhood." 
+The 350 trim yields a larger optimal value of K, 35 vs. 20. This is likely due to a larger sample size. The dataset contains 417 vehicles with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more data points nearby, we can afford a higher K-value, since the bias is offset by the higher concentration of data points in each "neighborhood." 
+
+
+
+
