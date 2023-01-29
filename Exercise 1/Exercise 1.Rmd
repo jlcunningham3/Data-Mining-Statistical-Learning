@@ -127,7 +127,7 @@ k_350 = c(2, 4, 6, 8, 10, 15, 20, 25, 30, 35, 40, 45,
          50, 55, 60, 65, 70, 80, 90, 100, 120, 140, 160, 180, 200, 250, 300)
 
 
-rmse_350 = foreach(kk =k_350, .combine='rbind') %do% {
+rmse_350 = foreach(kk = k_350, .combine='rbind') %do% {
   knn_350 = knnreg(price~mileage, data=group_train350, k=kk)
   modelr::rmse(knn_350, data=group_test350)
 }
@@ -139,11 +139,11 @@ ggplot(df350) +
        y="Root Mean Squared Error",
        title="RMSE by K-value, 65 AMG Trim") 
 
-k350_35 = knnreg(price~mileage, data=group_train350, k=35)
-  modelr::rmse(k350_35, data=group_test350)
+k350_15 = knnreg(price~mileage, data=group_train350, k=15)
+  modelr::rmse(k350_15, data=group_test350)
   
-k65_20 = knnreg(price~mileage, data=group_train65, k=20)
-  modelr::rmse(k65_20, data=group_test65)
+k65_6 = knnreg(price~mileage, data=group_train65, k=6)
+  modelr::rmse(k65_6, data=group_test65)
 ```
 
 
@@ -151,35 +151,35 @@ k65_20 = knnreg(price~mileage, data=group_train65, k=20)
 #Plot fitted models
 
 group_test65 = group_test65 %>%
-  mutate(price_pred = predict(k65_20, group_test65))
+  mutate(price_pred = predict(k65_6, group_test65))
 
 p_test65 = ggplot(data = group_test65) + 
   geom_point(mapping = aes(x = mileage, y = price), alpha=0.5) +
   scale_y_continuous(name="Price ($)", labels = comma) +
   scale_x_continuous(name="Mileage", labels = comma) + 
-  labs(title="Fitted Model for 65 AMG Trim with K = 20") +
+  labs(title="Fitted Model for 65 AMG Trim with K = 6") +
   geom_line(aes(x = mileage, y = price_pred), color='red', linewidth=1.5)
 p_test65
 
 group_test350 = group_test350 %>%
-  mutate(price_pred = predict(k350_35, group_test350))
+  mutate(price_pred = predict(k350_15, group_test350))
 
 p_test350 = ggplot(data = group_test350) + 
   geom_point(mapping = aes(x = mileage, y = price), alpha=0.5) +
   scale_y_continuous(name="Price ($)", labels = comma) +
   scale_x_continuous(name="Mileage", labels = comma) + 
-  labs(title="Fitted Model for 350 Trim with K = 35") +
+  labs(title="Fitted Model for 350 Trim with K = 15") +
   geom_line(aes(x = mileage, y = price_pred), color='red', linewidth=1.5)
 p_test350
 ```
 
 &nbsp;
 
-RMSE is minimized for the 350 trim at K = 35, with an RMSE value of 9,290.
+RMSE is minimized for the 350 trim at K = 15.
 
-For the 65 AMG trim, RMSE is minimized at K = 20, with a value of 20,941.
+For the 65 AMG trim, RMSE is minimized at K = 6.
 
-The 350 trim yields a larger optimal value of K, 35 vs. 20. This is likely due to a larger sample size. The dataset contains 417 vehicles with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more data points nearby, we can afford a higher K-value, since the bias is offset by the higher concentration of data points in each "neighborhood." 
+The 350 trim yields a larger optimal value of K, 15 vs. 6. This is likely due to a larger sample size. The dataset contains 417 vehicles with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more data points nearby, we can afford a higher K-value, since the bias is offset by the higher concentration of data points in each "neighborhood." 
 
 
 
