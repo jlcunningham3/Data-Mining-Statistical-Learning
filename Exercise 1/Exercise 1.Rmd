@@ -1,6 +1,6 @@
 ---
 title: "Exercise 1"
-author: "Jack Cunningham"
+author: "Jack Cunningham, Ali Fazl, and Ken Noddings"
 date: "2023-01-30"
 output: md_document
 ---
