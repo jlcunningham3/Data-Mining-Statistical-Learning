@@ -82,21 +82,19 @@ is?*
 
 ![](Exercise-1_files/figure-markdown_strict/3.1-1.png)![](Exercise-1_files/figure-markdown_strict/3.1-2.png)
 
-    ## [1] 8519.621
+    ## [1] 9669.838
 
-    ## [1] 19259.85
+    ## [1] 21356.8
 
 ![](Exercise-1_files/figure-markdown_strict/3.2-1.png)![](Exercise-1_files/figure-markdown_strict/3.2-2.png)
 
  
 
-RMSE is minimized for the 350 trim at K = 35, with an RMSE value of
-9,290.
+RMSE is minimized for the 350 trim at K = 15.
 
-For the 65 AMG trim, RMSE is minimized at K = 20, with a value of
-20,941.
+For the 65 AMG trim, RMSE is minimized at K = 6.
 
-The 350 trim yields a larger optimal value of K, 35 vs. 20. This is
+The 350 trim yields a larger optimal value of K, 15 vs. 6. This is
 likely due to a larger sample size. The dataset contains 417 vehicles
 with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more
 data points nearby, we can afford a higher K-value, since the bias is
