@@ -162,9 +162,9 @@ is?*
 
 ![](Exercise-1_files/figure-markdown_strict/3.1-1.png)![](Exercise-1_files/figure-markdown_strict/3.1-2.png)
 
-    ## [1] 9910.877
+    ## [1] 9750.549
 
-    ## [1] 16919.43
+    ## [1] 28103.78
 
 ![](Exercise-1_files/figure-markdown_strict/3.2-1.png)![](Exercise-1_files/figure-markdown_strict/3.2-2.png)
 
