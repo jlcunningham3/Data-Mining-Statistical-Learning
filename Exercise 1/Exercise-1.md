@@ -91,21 +91,6 @@ competitors across all Athletics events is 186 cm.
 
 ### B) Which single women’s event had the greatest variability in competitor’s heights across the entire history of the Olympics, as measured by the standard deviation?
 
-    ## # A tibble: 132 × 2
-    ##    event                                          sd
-    ##    <chr>                                       <dbl>
-    ##  1 Athletics Women's 1,500 metres               5.03
-    ##  2 Athletics Women's 10 kilometres Walk         4.31
-    ##  3 Athletics Women's 10,000 metres              5.41
-    ##  4 Athletics Women's 100 metres                 6.29
-    ##  5 Athletics Women's 100 metres Hurdles         4.68
-    ##  6 Athletics Women's 20 kilometres Walk         5.28
-    ##  7 Athletics Women's 200 metres                 5.14
-    ##  8 Athletics Women's 3,000 metres               5.48
-    ##  9 Athletics Women's 3,000 metres Steeplechase  6.06
-    ## 10 Athletics Women's 4 x 100 metres Relay       5.57
-    ## # … with 122 more rows
-
 Women’s Rowing Coxed Fours was the most variable event, with a standard
 deviation of 10.87.
 
@@ -130,10 +115,30 @@ deviation of 10.87.
 
  
 
+## Extra work for Problem 2: Interesting result of heights by gender in Summer vs. Winter Games
+
     ## `summarise()` has grouped output by 'sex'. You can override using the `.groups`
     ## argument.
 
 ![](Exercise-1_files/figure-markdown_strict/2.extra-1.png)
+
+ 
+
+In this graph we see the male heights of Olympic athletes on top and the
+female heights on bottom. Since the Summer and Winter Games were in the
+same year before 1992, the data was combined, so we can’t see a
+distinction between heights of competitors in Summer vs. Winter Games.
+In the years since 1992, the Games have been two years apart, so we can
+now plot the height for both men and women by whether they competed in
+the Summer or Winter Games.
+
+Interestingly, the difference in male heights between the Summer and
+Winter Games is small relative to the difference in female heights. The
+variability in female heights also remains relatively constant over time
+compared to the male variability, which has been increasing slightly
+over time.
+
+ 
 
 ## Exercise 3
 
@@ -162,9 +167,9 @@ is?*
 
 ![](Exercise-1_files/figure-markdown_strict/3.1-1.png)![](Exercise-1_files/figure-markdown_strict/3.1-2.png)
 
-    ## [1] 9750.549
+    ## [1] 10790.67
 
-    ## [1] 28103.78
+    ## [1] 18827.41
 
 ![](Exercise-1_files/figure-markdown_strict/3.2-1.png)![](Exercise-1_files/figure-markdown_strict/3.2-2.png)
 
