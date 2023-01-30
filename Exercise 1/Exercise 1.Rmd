@@ -173,10 +173,10 @@ The table provides the 95th quantile of height for female competitors within eac
 ```{r 2b}
 fHeightSDev <- olympicDataF %>%
   group_by(event) %>%
-  summarize(sd = sd(height, na.rm = TRUE))
+  summarize(sd = sd(height, na.rm = TRUE)) %>%
+  arrange(desc(sd))
 
 view(fHeightSDev)
-fHeightSDev
 ```
 
 Women's Rowing Coxed Fours was the most variable event, with a standard deviation of 10.87.
@@ -212,6 +212,8 @@ ggplot()+
 
 &nbsp;
 
+## Extra work for Problem 2: Interesting result of heights by gender in Summer vs. Winter Games
+
 ```{r 2.extra}
 # extra - Interesting result of heights by gender in Summer vs. Winter Games
 avgHeight <- olympics %>%
@@ -244,6 +246,14 @@ ggplot()+
   theme_light()
 
 ```
+
+&nbsp;
+
+In this graph we see the male heights of Olympic athletes on top and the female heights on bottom. Since the Summer and Winter Games were in the same year before 1992, the data was combined, so we can't see a distinction between heights of competitors in Summer vs. Winter Games. In the years since 1992, the Games have been two years apart, so we can now plot the height for both men and women by whether they competed in the Summer or Winter Games.
+
+Interestingly, the difference in male heights between the Summer and Winter Games is small relative to the difference in female heights. The variability in female heights also remains relatively constant over time compared to the male variability, which has been increasing slightly over time.
+
+&nbsp;
 
 ## Exercise 3
 
