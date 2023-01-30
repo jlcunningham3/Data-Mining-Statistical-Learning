@@ -18,6 +18,7 @@ library(caret)
 library(modelr)
 library(parallel)
 library(ipred)
+library(chron)
 library(foreach)
 library(scales)
 ABIA = read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 1/ABIA.csv")
@@ -29,19 +30,115 @@ sclass = read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning
 
 *Your task is to create a figure, or set of related figures, that tell an interesting story about flights into and out of Austin. You should annotate your figure(s), of course, but strive to make them as easy to understand as possible at a quick glance.*
 
-``` {r 1}
-ABIA = ABIA %>%
-  mutate(CRSDepTime2 = (CRSDepTime)^2)
+``` {r 1.1}
+ABIA=ABIA%>%
+  mutate(
+    hourly_time=floor (CRSDepTime/100),
+    Abs_ArrDel=abs(ArrDelay),
+    Abs_DepDel=abs(DepDelay)
+  )
 
-lm1 = lm(LateAircraftDelay ~ CRSDepTime, data=ABIA)
-summary(lm1)
+ABIA2=ABIA%>%
+  filter(ArrDelay!="NA")%>%
+  group_by(hourly_time)%>%
+  summarise(
+    AvgArrDel=mean(Abs_ArrDel)
+  )%>%
+  arrange(AvgArrDel)
+head(ABIA2)
 
-ggplot(data = ABIA, aes(x=CRSDepTime, y=LateAircraftDelay)) + 
-  geom_jitter(width = 0.2) + 
-  stat_smooth(method = "lm1", se = FALSE)
+ggplot(ABIA2) +
+  geom_line(aes(x = hourly_time, y = AvgArrDel), color='red', linewidth=1.5) +
+  labs(title = "Average Delay of Flights Into ABIA by Time of Day",
+        x = "Hourly Time",
+       y = "Average Delay in Minutes")
+
+
+ABIA4=ABIA%>%
+  filter(DepDelay!="NA")%>%
+  group_by(hourly_time)%>%
+  summarise(
+    AvgDepDel=mean(Abs_DepDel)
+  )%>%
+  arrange(AvgDepDel)
+head(ABIA4)
+
+ggplot(ABIA4)+
+  geom_line(aes(x = hourly_time, y = AvgDepDel), color='red', linewidth=1.5) +
+  labs(title = "Average Delay of Flights Out of ABIA by Time of Day",
+        x = "Hourly Time",
+       y = "Average Delay in Minutes") 
 ```
 
-*Notes go here*
+&nbsp;
+
+Here we show the average delays for both arriving flights into ABIA and departing flights from ABIA, plotted by hour of the day. It is best to both arrive at and depart from ABIA in the 6:00 AM hour for the smallest delays; in general, mornings see small delays for both incoming and departing flights relative to evenings. The 8:00 PM hour sees both the largest departure delays from ABIA and arrival delays into ABIA. In general, arrival delays are higher than departure delays across hours.
+
+&nbsp;
+
+```{r 1.2}
+ABIA3=ABIA%>%
+  filter(ArrDelay!="NA")%>%
+  mutate(across('UniqueCarrier', str_replace, 'UA', 'United'))%>%
+  mutate(across('UniqueCarrier', str_replace, '9E', 'Edeavor'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'AA', 'American'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'B6', 'Jet Blue'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'CO', 'Continental'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'DL', 'Delta'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'EV', 'EVA Air'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'F9', 'Frontier'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'MQ', 'Envoy'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'NW', 'Northwest'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'OH', 'PSA Airline'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'OO', 'SkyWest'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'US', 'US Airways'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'WN', 'Southwest'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'XE', 'JSX Airline'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'YV', 'Mesa Airline'))%>%
+  group_by(UniqueCarrier, hourly_time)%>%
+  summarise(
+    AvgArrDel_airline=mean(Abs_ArrDel), count = n()) %>%
+  mutate("LowObs" = case_when(count < 4 ~ 1, TRUE ~ 0))
+
+airline_labeller <- c("1","2","3","4","5","6","7","8","1","2","3","4","5","6","7","8")
+
+ggplot(ABIA3)+
+  geom_col(aes(x=hourly_time, y=AvgArrDel_airline, color = LowObs), show.legend = FALSE)+
+  facet_wrap(~UniqueCarrier)+
+  labs(x = "Time of Day in Hours", y = "Average Delay in Minutes", title = "Average Delay of Flights Arriving to ABIA by Time of Day and Airline", caption = "Columns outlined in blue represent averages calculated from less than four data points.")+
+  theme_light()
+
+ABIA5=ABIA%>%
+  filter(DepDelay!="NA")%>%
+  mutate(across('UniqueCarrier', str_replace, 'UA', 'United'))%>%
+  mutate(across('UniqueCarrier', str_replace, '9E', 'Edeavor'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'AA', 'American'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'B6', 'Jet Blue'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'CO', 'Continental'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'DL', 'Delta'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'EV', 'EVA Air'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'F9', 'Frontier'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'MQ', 'Envoy'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'NW', 'Northwest'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'OH', 'PSA Airline'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'OO', 'SkyWest'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'US', 'US Airways'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'WN', 'Southwest'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'XE', 'JSX Airline'))%>%
+  mutate(across('UniqueCarrier', str_replace, 'YV', 'Mesa Airline'))%>%
+  group_by(UniqueCarrier, hourly_time)%>%
+  summarise(
+    AvgDepDel_airline=mean(Abs_DepDel), count = n()) %>%
+  mutate("LowObs" = case_when(count < 4 ~ 1, TRUE ~ 0))
+  
+ggplot(ABIA5)+
+  geom_col(aes(x=hourly_time, y=AvgDepDel_airline, color = LowObs), show.legend = FALSE)+
+  facet_wrap(~UniqueCarrier)+
+  labs(x = "Time of Day in Hours", y = "Average Delay in Minutes", title = "Average Delay of Flights Departing from ABIA by Time of Day and Airline", caption = "Columns outlined in blue represent averages calculated from less than four data points.")+
+  theme_light()
+```
+
+Here we plot average arrival and departure delays by time of day for each airline flying into and out of ABIA. We noticed some times on some airlines featured outlying average delays, so we isolated low observation counts (<4 data points) for each airline at each hour. The outlying delay times all come from such low observation count flights. This implies possible poor accuracy in calculating delays from those airlines at those times.
 
 &nbsp;
 
@@ -50,29 +147,102 @@ ggplot(data = ABIA, aes(x=CRSDepTime, y=LateAircraftDelay)) +
 ### A) What is the 95th percentile of heights for female competitors across all Athletics events (i.e., track and field)?
 
 ```{r 2a}
+#a
+olympicDataF <- olympics %>%
+  subset(sex !="M")
 
+#95th quantiles by event
+fHeight95th <- olympicDataF %>%
+  group_by(event) %>%
+  summarize(quant95 = quantile(height, probs = .95))
+fHeight95th
 
+#95th quantiles across all events
+fHeight95th_across <- olympicDataF %>%
+  summarize(quant95 = quantile(height, probs = .95))
+fHeight95th_across
 ```
+
+The table provides the 95th quantile of height for female competitors within each Athletics event. The 95th quantile of height for female competitors across all Athletics events is 186 cm.
 
 &nbsp;
 
 ### B) Which single women's event had the greatest variability in competitor's heights across the entire history of the Olympics, as measured by the standard deviation?
 
 ```{r 2b}
+fHeightSDev <- olympicDataF %>%
+  group_by(event) %>%
+  summarize(sd = sd(height, na.rm = TRUE))
 
-
+view(fHeightSDev)
+fHeightSDev
 ```
+
+Women's Rowing Coxed Fours was the most variable event, with a standard deviation of 10.87.
 
 &nbsp;
 
 ### C) How has the average age of Olympic swimmers changed over time? Does the trend look different for male swimmers relative to female swimmers? Create a data frame that can allow you to visualize these trends over time, then plot the data with a line graph with separate lines for male and female competitors. Give the plot an informative caption answering the two questions just posed.
 
 ```{r 2c}
+avgAge <- olympics %>%
+  subset(sport == "Swimming")%>%
+  group_by(sex, year) %>%
+  summarize(mean = mean(age)) %>%
+  ungroup()
 
+head(avgAge)
 
+avgAgeM <- avgAge%>%
+  subset(sex == "M")
+
+avgAgeF <- avgAge%>%
+  subset(sex == "F")
+
+ggplot()+
+  geom_line(data = avgAgeF, aes(x = year, y = mean, color = "pink"))+
+  geom_line(data = avgAgeM, aes(x = year, y = mean, color = "blue"))+
+  labs(x = "Year", y = "Age", 
+       title = "How the Average Age of Olympic Swimmers Has Changed Over Time",
+       caption = "While average ages in the early Olympics were quite chaotic, in more recent years\n from 1928 onwards, Olympic swimmers ages have been steadily increasing on average.\n This trend is roughly the same between both male and female swimmers.") +
+  scale_colour_manual("Gender",values=c("blue","#F8766D"),labels=c("Male","Female"))+
+  theme_light()
 ```
 
 &nbsp;
+
+```{r 2.extra}
+# extra - Interesting result of heights by gender in Summer vs. Winter Games
+avgHeight <- olympics %>%
+  group_by(sex, year) %>%
+  summarize(mean = mean(height)) %>%
+  ungroup()
+
+#games divisible by four are summer
+avgHeightM <- avgHeight%>%
+  subset(sex == "M") %>%
+  mutate("season" = case_when(1993 > year ~ "o", 0 == year%%4 ~ "Summer", TRUE ~ "Winter"))
+seasonalM <- avgHeightM %>%
+  subset(season != "o")
+
+avgHeightF <- avgHeight%>%
+  subset(sex == "F") %>%
+  mutate("season" = case_when(1993 > year ~ "o", 0 == year%%4 ~ "Summer", TRUE ~ "Winter"))
+seasonalF <- avgHeightF %>%
+  subset(season != "o")
+seasonal <- rbind(seasonalF, seasonalM)
+ 
+ggplot()+
+  geom_point(data = seasonal, aes(x = year, y = mean, color = season)) +
+  geom_line(data = avgHeightF, aes(x = year, y = mean))+
+  geom_line(data = avgHeightM, aes(x = year, y = mean))+
+  labs(x = "", y = "", 
+       title = "Average height by gender in Olympic games",
+       caption = "",
+       color = "Season\n(post 1992)") +
+  theme_light()
+
+```
 
 ## Exercise 3
 
@@ -179,8 +349,6 @@ RMSE is minimized for the 350 trim at K = 15.
 
 For the 65 AMG trim, RMSE is minimized at K = 6.
 
-The 350 trim yields a larger optimal value of K, 15 vs. 6. This is likely due to a larger sample size. The dataset contains 417 vehicles with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more data points nearby, we can afford a higher K-value, since the bias is offset by the higher concentration of data points in each "neighborhood." 
+The 350 trim yields a larger optimal value of K. This is likely due to a larger sample size. The dataset contains 417 vehicles with the 350 trim, but only 292 vehicles with the 65 AMG trim. With more data points nearby, we can afford a higher K-value, since the bias is offset by the higher concentration of data points in each "neighborhood." 
 
-
-
-
+*NOTE: Different values of K were optimal upon repeatedly running different train-test splits for both the 350 and 65 AMG trims. We chose the values of K that most commonly occurred as optimal.*
