@@ -13,7 +13,7 @@ yhat_test_logit_default = ifelse(phat_test_logit_default > 0.5, 1, 0)
 
 kkk= cbind(phat_test_logit_default, yhat_test_logit_default, default_test$Default)
 
-confusion_matrix = table(defualt = default_test$Default,
+confusion_matrix = table(default = default_test$Default,
                          Prediction = yhat_test_logit_default)
 
 #how accurate is the model?

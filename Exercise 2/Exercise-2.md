@@ -13,15 +13,15 @@
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1</td>
-<td style="text-align: right;">67638.15</td>
+<td style="text-align: right;">74545.25</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">55671.59</td>
+<td style="text-align: right;">66239.71</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">53898.69</td>
+<td style="text-align: right;">64981.28</td>
 </tr>
 </tbody>
 </table>
@@ -39,15 +39,15 @@ RMSE of each model, first pass
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1</td>
-<td style="text-align: right;">66185.47</td>
+<td style="text-align: right;">66349.98</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">59350.18</td>
+<td style="text-align: right;">59774.17</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">58065.15</td>
+<td style="text-align: right;">57928.28</td>
 </tr>
 </tbody>
 </table>
@@ -66,32 +66,32 @@ Summary of the best model:
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -243966  -33147   -6059   27228  440586 
+    ## -251622  -33810   -4893   25517  444698 
     ## 
     ## Coefficients:
     ##                                    Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                       1.252e+04  1.592e+04   0.786  0.43173    
-    ## newConstructionNo                 1.025e+04  1.178e+04   0.870  0.38468    
-    ## pctCollege                       -4.384e+02  1.813e+02  -2.418  0.01575 *  
-    ## bedrooms                         -5.486e+03  2.963e+03  -1.851  0.06436 .  
-    ## bathrooms                         2.750e+04  4.156e+03   6.616  5.3e-11 ***
-    ## newConstructionYes:landValue      3.255e-01  1.153e-01   2.823  0.00483 ** 
-    ## newConstructionNo:landValue       1.109e+00  5.680e-02  19.517  < 2e-16 ***
-    ## age:pctCollege                    5.791e+00  2.805e+00   2.064  0.03916 *  
-    ## livingArea:centralAirYes          9.097e+01  5.374e+00  16.927  < 2e-16 ***
-    ## livingArea:centralAirNo           8.079e+01  5.407e+00  14.942  < 2e-16 ***
-    ## bedrooms:heatinghot water/steam   4.350e+03  4.131e+03   1.053  0.29246    
-    ## bedrooms:heatingelectric          1.271e+04  4.844e+03   2.623  0.00881 ** 
-    ## bathrooms:heatinghot water/steam -1.362e+04  7.185e+03  -1.896  0.05821 .  
-    ## bathrooms:heatingelectric        -2.519e+04  8.076e+03  -3.119  0.00185 ** 
-    ## age:livingArea:centralAirYes     -4.994e-01  1.268e-01  -3.939  8.6e-05 ***
-    ## age:livingArea:centralAirNo      -1.958e-01  7.864e-02  -2.490  0.01288 *  
+    ## (Intercept)                       2.007e+04  1.604e+04   1.251 0.211011    
+    ## newConstructionNo                 1.870e+04  1.196e+04   1.564 0.118070    
+    ## pctCollege                       -5.934e+02  1.809e+02  -3.281 0.001061 ** 
+    ## bedrooms                         -9.104e+03  2.908e+03  -3.131 0.001778 ** 
+    ## bathrooms                         2.678e+04  4.155e+03   6.445 1.60e-10 ***
+    ## newConstructionYes:landValue      3.346e-01  1.162e-01   2.881 0.004032 ** 
+    ## newConstructionNo:landValue       1.078e+00  5.707e-02  18.883  < 2e-16 ***
+    ## age:pctCollege                    4.832e+00  2.691e+00   1.795 0.072830 .  
+    ## livingArea:centralAirYes          9.622e+01  5.221e+00  18.428  < 2e-16 ***
+    ## livingArea:centralAirNo           8.400e+01  5.356e+00  15.685  < 2e-16 ***
+    ## bedrooms:heatinghot water/steam   4.572e+03  4.507e+03   1.014 0.310532    
+    ## bedrooms:heatingelectric          1.575e+04  4.939e+03   3.188 0.001465 ** 
+    ## bathrooms:heatinghot water/steam -1.207e+04  7.590e+03  -1.591 0.111932    
+    ## bathrooms:heatingelectric        -2.938e+04  8.348e+03  -3.519 0.000447 ***
+    ## age:livingArea:centralAirYes     -4.981e-01  1.119e-01  -4.450 9.27e-06 ***
+    ## age:livingArea:centralAirNo      -1.546e-01  7.472e-02  -2.069 0.038704 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 58290 on 1366 degrees of freedom
-    ## Multiple R-squared:  0.6526, Adjusted R-squared:  0.6488 
-    ## F-statistic: 171.1 on 15 and 1366 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 58490 on 1366 degrees of freedom
+    ## Multiple R-squared:  0.6657, Adjusted R-squared:  0.662 
+    ## F-statistic: 181.4 on 15 and 1366 DF,  p-value: < 2.2e-16
 
  
 
@@ -136,7 +136,7 @@ We tested values of K from 5 to 30 and compiled the graph below:
 
 ![](Exercise-2_files/figure-markdown_strict/1c-1.png)
 
-The best model is found at k = 19, with an RMSE of just above 56,000.
+The best model is found at k = 21, with an RMSE of just above 56,000.
 This also outperforms our best linear model. Therefore we believe that
 K-nearest-neighbor regression should be used to predict taxable market
 values.
@@ -204,12 +204,41 @@ negative. This implies that borrowers with poor or terrible credit
 histories are less likely to default, on average, than borrowers with
 good credit histories. This is strange, because the purpose of credit
 history is to help banks determine the likelihood of default: people
-with good credit should default at much lower rates than people with
-poor or terrible credit, not the other way around.
+with good credit should default at lower rates than people with poor or
+terrible credit, not the other way around.
 
 We don’t think this dataset is appropriate for building a predictive
-model of defaults. Instead, we would recommend the bank use a dataset
-consisting of a random sample of loans in the bank’s overall portfolio.
+model of defaults. This is because the sample the bank chose was a set
+of loans that had defaulted and “similar” sets of loans that had not
+defaulted. These “similar” characteristics introduce endogeneity
+(selection bias) in the dataset, making the results unreliable. An
+analogy might be estimating the effect of going to a hospital on health
+outcomes; people who go to hospitals are more likely to have poor health
+outcomes, but as a result of the sample of people who go to hospitals
+and not as a result of the hospitals’ treatment.
+
+Instead, we would recommend the bank use a dataset consisting of a
+random sample of loans in the bank’s overall portfolio. A random sample
+would eliminate selection bias and would be more appropriate to use for
+prediction of defaults. (This might entail a (much) larger sample size,
+so as to ensure there are enough defaulted loans to provide statistical
+power.)
+
+    ## # A tibble: 3 × 2
+    ##   Credit   Count
+    ##   <chr>    <int>
+    ## 1 terrible   293
+    ## 2 poor       618
+    ## 3 good        89
+
+The above gives more numerical insight into the dataset. We can see that
+there are few people with good credit in this data set, the majority
+with poor credit, and nearly 30% have terrible credit. We would want to
+determine if these proportions are representative of the population of
+people with loans from this bank as a whole - but given the sampling
+methods of this subsample, we would guess that this is likely an
+overestimate of people with terrible credit and an underestimate of
+people with good credit.
 
  
 
@@ -218,15 +247,20 @@ consisting of a random sample of loans in the bank’s overall portfolio.
 ### 3.A: Model building
 
 *Using only the data in hotels.dev.csv, please compare the out-of-sample
-performance of the following models:* *1. baseline 1: a small model that
-uses only the market\_segment, adults, customer\_type, and
-is\_repeated\_guest variables as features.* *2. baseline 2: a big model
-that uses all the possible predictors except the arrival\_date variable
-(main effects only).* *3. the best linear model you can build, including
-any engineered features that you can think of that improve the
-performance (interactions, features derived from time stamps, etc).*
+performance of the following models:*
+
+*1. baseline 1: a small model that uses only the market\_segment,
+adults, customer\_type, and is\_repeated\_guest variables as features.*
+
+*2. baseline 2: a big model that uses all the possible predictors except
+the arrival\_date variable (main effects only).*
+
+*3. the best linear model you can build, including any engineered
+features that you can think of that improve the performance
+(interactions, features derived from time stamps, etc).*
 
 <table>
+<caption>RMSE of each model, first pass</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">model</th>
@@ -236,32 +270,32 @@ performance (interactions, features derived from time stamps, etc).*
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1 (baseline 1)</td>
-<td style="text-align: right;">0.2718524</td>
+<td style="text-align: right;">0.2681140</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">0.2368763</td>
+<td style="text-align: right;">0.2315653</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3 (baseline 2)</td>
-<td style="text-align: right;">0.2359495</td>
+<td style="text-align: right;">0.2312369</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm4</td>
-<td style="text-align: right;">0.2283292</td>
+<td style="text-align: right;">0.2226067</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm5</td>
-<td style="text-align: right;">0.2281088</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">lm_lasso</td>
-<td style="text-align: right;">0.2281194</td>
+<td style="text-align: right;">0.2217662</td>
 </tr>
 </tbody>
 </table>
 
+RMSE of each model, first pass
+
 <table>
+<caption>Average RMSE of best models through 10 train/test
+splits</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">model</th>
@@ -271,18 +305,16 @@ performance (interactions, features derived from time stamps, etc).*
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm4</td>
-<td style="text-align: right;">0.2236216</td>
+<td style="text-align: right;">0.2241235</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm5</td>
-<td style="text-align: right;">0.2226746</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">lm_lasso</td>
-<td style="text-align: right;">0.2226665</td>
+<td style="text-align: right;">0.2236903</td>
 </tr>
 </tbody>
 </table>
+
+Average RMSE of best models through 10 train/test splits
 
 Summary of the best model (lm5):
 
@@ -688,15 +720,20 @@ classification threshold t.*
 *Next, create 20 folds of hotels\_val. There are 4,999 bookings in
 hotels\_val, so each fold will have about 250 bookings in it – roughly
 the number of bookings the hotel might have on a single busy weekend.
-For each fold:* *1. Predict whether each booking will have children on
-it.* *2. Sum up the predicted probabilities for all the bookings in the
-fold. This gives an estimate of the expected number of bookings with
-children for that fold.* *3. Compare this “expected” number of bookings
-with children versus the actual number of bookings with children in that
-fold.* *How well does your model do at predicting the total number of
-bookings with children in a group of 250 bookings? Summarize this
-performance across all 20 folds of the val set in an appropriate figure
-or table.*
+For each fold:*
+
+*1. Predict whether each booking will have children on it.*
+
+*2. Sum up the predicted probabilities for all the bookings in the fold.
+This gives an estimate of the expected number of bookings with children
+for that fold.*
+
+*3. Compare this “expected” number of bookings with children versus the
+actual number of bookings with children in that fold.*
+
+*How well does your model do at predicting the total number of bookings
+with children in a group of 250 bookings? Summarize this performance
+across all 20 folds of the val set in an appropriate figure or table.*
 
 <table>
 <thead>
