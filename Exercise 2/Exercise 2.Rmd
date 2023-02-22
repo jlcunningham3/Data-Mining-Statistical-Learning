@@ -97,6 +97,11 @@ RMSE2 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = colMeans(rmse_sim1))
 RMSE2.1 = kable(RMSE2, caption = "Average RMSE through 100 train/test splits")
 RMSE2.1
 
+```
+
+Summary of the best model:
+
+```{r 1a.1}
 # Best model summary
 summary(lm3.1)
 ```
@@ -112,6 +117,7 @@ Saratoga_scale=SaratogaHouses %>%
 #################################
 
 #####################model with age############################
+set.seed(111)
 k_values <- data.frame(k = 5:30)
 trControl <- trainControl(method = "cv", number =100, returnResamp = "all")
 fit <- train(price ~ age + landValue + livingArea + bathrooms + waterfront + centralAir,
@@ -123,7 +129,6 @@ RMSE5_30 <- ggplot(data = fit[["results"]], aes(x = k, y = RMSE))+
   scale_x_continuous(name = "Value of K",
                      breaks = c(5:30),
                      labels = waiver())
-RMSE5_30
 
 k_valuesLong <- data.frame(k = 1:100)
 trControl <- trainControl(method = "cv", number =20, returnResamp = "all")
@@ -149,7 +154,7 @@ We also fitted predictive models using K-nearest-neighbor regression. This form 
 RMSE5_30
 ```
  
-The best model is found at k = 18, with an RMSE of just above 56,000. This also outperforms our best linear model, therefore we believe that K-nearest-neighbor regression should be used to predict taxable market values.
+The best model is found at k = 19, with an RMSE of just above 56,000. This also outperforms our best linear model. Therefore we believe that K-nearest-neighbor regression should be used to predict taxable market values.
 
 &nbsp;
 
@@ -177,13 +182,18 @@ summary(logit_GC)
 
 The coefficients on historypoor and historyterrible are significant and negative. This implies that borrowers with poor or terrible credit histories are less likely to default, on average, than borrowers with good credit histories. This is strange, because the purpose of credit history is to help banks determine the likelihood of default: people with good credit should default at much lower rates than people with poor or terrible credit, not the other way around.
 
-I don't think this dataset is appropriate for building a predictive model of defaults. Instead, I would recommend the bank use a dataset consisting of a random sample of loans in the bank's overall portfolio.
+We don't think this dataset is appropriate for building a predictive model of defaults. Instead, we would recommend the bank use a dataset consisting of a random sample of loans in the bank's overall portfolio.
 
 &nbsp;
 
 ## Exercise 3: Children and hotel reservations
 
 ### 3.A: Model building
+
+*Using only the data in hotels.dev.csv, please compare the out-of-sample performance of the following models:*
+*1. baseline 1: a small model that uses only the market_segment, adults, customer_type, and is_repeated_guest variables as features.*
+*2. baseline 2: a big model that uses all the possible predictors except the arrival_date variable (main effects only).*
+*3. the best linear model you can build, including any engineered features that you can think of that improve the performance (interactions, features derived from time stamps, etc).*
 
 ```{r 3a}
 # Add time factors
@@ -224,11 +234,12 @@ hlasso <- cv.gamlr(x, y, nfold=10, family="binomial")
 lm_lasso = lm(children ~ . - lead_time - stays_in_week_nights - previous_cancellations - deposit_type - days_in_waiting_list + lead_time*stays_in_weekend_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + meal:booking_changes, data = Hdev_train)
 
 # RMSE table
-RMSE3 = tibble("model" = c("lm1", "lm2", "lm3", "lm4", "lm5", "lm_lasso"), "RMSE" = c(rmse(lm1, Hdev_test), rmse(lm2, Hdev_test), rmse(lm3, Hdev_test), rmse(lm4, Hdev_test), rmse(lm5, Hdev_test), rmse(lm_lasso, Hdev_test)))
-RMSE3.1 = kable(RMSE3, caption = "RMSE of each model, first pass")
+RMSE3 = tibble("model" = c("lm1 (baseline 1)", "lm2", "lm3 (baseline 2)", "lm4", "lm5", "lm_lasso"), "RMSE" = c(rmse(lm1, Hdev_test), rmse(lm2, Hdev_test), rmse(lm3, Hdev_test), rmse(lm4, Hdev_test), rmse(lm5, Hdev_test), rmse(lm_lasso, Hdev_test)))
+RMSE3.1 = kable(RMSE3, title = "RMSE of each model, first pass")
 RMSE3.1
 
 ## Choose the three models with the lowest RMSE and check for robustness with an average RMSE from ten new train/test splits
+set.seed(135)
 rmse_sim = do(10)*{
   # fresh train/test split
   Hdev_split = initial_split(Hdev, prop = 0.8)
@@ -248,16 +259,22 @@ rmse_sim = do(10)*{
 }
 
 RMSE4 = tibble("model" = c("lm4", "lm5", "lm_lasso"), "RMSE" = colMeans(rmse_sim))
-RMSE4.1 = kable(RMSE4, caption = "Average RMSE of three best models through 10 train/test splits")
+RMSE4.1 = kable(RMSE4, title = "Average RMSE of three best models through 10 train/test splits")
 RMSE4.1
+```
 
+Summary of the best model (lm5):
+
+```{r 3a1}
 # Summary of the best model
 summary(lm5)
 ```
 
+&nbsp;
 
 ### 3.B: Model validation step 1
 
+*Produce an ROC curve for your best model, using the data in hotels_val: that is, plot TPR(t) versus FPR(t) as you vary the classification threshold t.*
 
 ```{r 3b}
 # Include the same new variables in hotels_val as we did in hotels_dev
@@ -275,14 +292,19 @@ plot(roc, colorize = T, lwd = 2)+
   abline(a = 0, b = 1) 
 ```
 
-
-
 &nbsp;
 
 ### 3.C: Model validation step 2
 
+*Next, create 20 folds of hotels_val. There are 4,999 bookings in hotels_val, so each fold will have about 250 bookings in it -- roughly the number of bookings the hotel might have on a single busy weekend. For each fold:*
+*1. Predict whether each booking will have children on it.*
+*2. Sum up the predicted probabilities for all the bookings in the fold. This gives an estimate of the expected number of bookings with children for that fold.*
+*3. Compare this "expected" number of bookings with children versus the actual number of bookings with children in that fold.*
+*How well does your model do at predicting the total number of bookings with children in a group of 250 bookings? Summarize this performance across all 20 folds of the val set in an appropriate figure or table.*
+
 ```{r 3c}
 # Create 20 folds of the dataset
+set.seed(1)
 folds <- createFolds(Hval$children, k = 20)
 
 # Initialize a vector to store the results
@@ -331,5 +353,5 @@ ggplot(results_table, aes(x = Fold, y = Difference)) +
   labs(x = "Fold", y = "Expected - Actual Children")
 ```
 
-Our model predicts the number of bookings with children in a group of 250 bookings quite well. The mean difference between predicted and actual number of bookings with children is just under 1, with a standard deviation just under 2.5. With our model, we predict the number of bookings with children accurately within a range of (-4, +4) for all 20 folds with 250 bookings.
+Our model predicts the number of bookings with children in a group of 250 bookings quite well. The mean difference between predicted and actual number of bookings with children is just under 1, with a standard deviation just under 2.5. With our model, we predict the number of bookings with children accurately within a range of (-5, +5) for all 20 folds with 250 bookings.
 
