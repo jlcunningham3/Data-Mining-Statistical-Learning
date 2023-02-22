@@ -219,8 +219,7 @@ x = model.matrix(children ~ . + lead_time*stays_in_weekend_nights + lead_time*st
 y = Hdev_train$children
 
 set.seed(1)
-hlasso <- cv.gamlr(x, y, nfold=10, family="binomial", verb = TRUE)
-coef(hlasso)
+hlasso <- cv.gamlr(x, y, nfold=10, family="binomial")
 
 lm_lasso = lm(children ~ . - lead_time - stays_in_week_nights - previous_cancellations - deposit_type - days_in_waiting_list + lead_time*stays_in_weekend_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + meal:booking_changes, data = Hdev_train)
 
@@ -320,8 +319,11 @@ results_table <- data.frame(
   Difference = round(diff_children, 2)
 )
 
-# Print out the table
-print(results_table)
+# Print out the results
+kable(results_table)
+summary(diff_children)
+Diff_children_results <- tibble(c("mean", "standard deviation"), c(mean(diff_children), sd(diff_children)))
+Diff_children_results
 
 # Create a bar chart of the differences between expected and actual children
 ggplot(results_table, aes(x = Fold, y = Difference)) +
@@ -329,4 +331,5 @@ ggplot(results_table, aes(x = Fold, y = Difference)) +
   labs(x = "Fold", y = "Expected - Actual Children")
 ```
 
+Our model predicts the number of bookings with children in a group of 250 bookings quite well. The mean difference between predicted and actual number of bookings with children is just under 1, with a standard deviation just under 2.5. With our model, we predict the number of bookings with children accurately within a range of (-4, +4) for all 20 folds with 250 bookings.
 
