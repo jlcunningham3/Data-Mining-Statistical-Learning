@@ -48,13 +48,13 @@ saratoga_test = testing(saratoga_split)
 
 # Fit to the training data# 
 #the first model is the basic 
-lm1 = lm(price ~ . - pctCollege - sewer - waterfront - landValue - newConstruction, data=saratoga_train)
+lm1.1 = lm(price ~ . - pctCollege - sewer - waterfront - landValue - newConstruction, data=saratoga_train)
 
 #the second model has a drastic change with only 6 variables 
-lm2 = lm(price ~  landValue+livingArea+bathrooms+ waterfront +centralAir, data=saratoga_train)
+lm2.1 = lm(price ~  landValue+livingArea+bathrooms+ waterfront +centralAir, data=saratoga_train)
 
 #the third model has the min rmse
-lm3 = lm(price ~ 
+lm3.1 = lm(price ~ 
            newConstruction*landValue+ 
            age*pctCollege +
            age*(landValue+livingArea)*(centralAir) +
@@ -68,33 +68,37 @@ lm3 = lm(price ~
            data=saratoga_train)
 
 # Root mean squared error
-RMSE1 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = c(rmse(lm1, saratoga_test), rmse(lm2, saratoga_test), rmse(lm3, saratoga_test)))
-RMSE1
+RMSE1 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = c(rmse(lm1.1, saratoga_test), rmse(lm2.1, saratoga_test), rmse(lm3.1, saratoga_test)))
+RMSE1.1 = kable(RMSE1, caption = "RMSE of each model, first pass")
+RMSE1.1
 
-summary(lm3)
-
-rmse_sim = do(100)*{
+# Check for robustness with an average RMSE from 100 new train/test splits
+rmse_sim1 = do(100)*{
   # fresh train/test split
   saratoga_split =  initial_split(SaratogaHouses, prop=0.8)
   saratoga_train = training(saratoga_split)
   saratoga_test  = testing(saratoga_split)
   
   # refit our models to this particular split
-  lm1 = update(lm1, data=saratoga_train)
-  lm2 = update(lm2, data=saratoga_train)
-  lm3 = update(lm3, data=saratoga_train)
+  lm1.1 = update(lm1.1, data=saratoga_train)
+  lm2.1 = update(lm2.1, data=saratoga_train)
+  lm3.1 = update(lm3.1, data=saratoga_train)
   
   
   # collect the model errors in a single vector
-  model_errors = c(rmse(lm1, saratoga_test), rmse(lm2, saratoga_test), rmse(lm3, saratoga_test))
+  model_errors = c(rmse(lm1.1, saratoga_test), rmse(lm2.1, saratoga_test), rmse(lm3.1, saratoga_test))
   
   # return the model errors
   model_errors
 }
 
 # average performance across the splits:
-RMSE2 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = colMeans(rmse_sim))
-RMSE2
+RMSE2 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = colMeans(rmse_sim1))
+RMSE2.1 = kable(RMSE2, caption = "Average RMSE through 100 train/test splits")
+RMSE2.1
+
+# Best model summary
+summary(lm3.1)
 ```
 
 &nbsp;
@@ -119,6 +123,7 @@ RMSE5_30 <- ggplot(data = fit[["results"]], aes(x = k, y = RMSE))+
   scale_x_continuous(name = "Value of K",
                      breaks = c(5:30),
                      labels = waiver())
+RMSE5_30
 
 k_valuesLong <- data.frame(k = 1:100)
 trControl <- trainControl(method = "cv", number =20, returnResamp = "all")
@@ -172,7 +177,7 @@ summary(logit_GC)
 
 The coefficients on historypoor and historyterrible are significant and negative. This implies that borrowers with poor or terrible credit histories are less likely to default, on average, than borrowers with good credit histories. This is strange, because the purpose of credit history is to help banks determine the likelihood of default: people with good credit should default at much lower rates than people with poor or terrible credit, not the other way around.
 
-I don't think this dataset is appropriate for building a predictive model of defaults. Instead, I would recommend the bank use a dataset consisting of a random sample of loans in the bank's overall portfolio (perhaps larger than n = 1000, if possible, to ensure a high enough number of defaulted loans are included).
+I don't think this dataset is appropriate for building a predictive model of defaults. Instead, I would recommend the bank use a dataset consisting of a random sample of loans in the bank's overall portfolio.
 
 &nbsp;
 
@@ -196,23 +201,18 @@ Hdev_test = testing(Hdev_split)
 
 # Simplest linear model
 lm1 = lm(children ~ market_segment + adults + customer_type + is_repeated_guest, data=Hdev_train)
-rmse(lm1, Hdev_test)
 
 # Add more variables
 lm2 = lm(children ~ hotel + adults + meal + is_repeated_guest + reserved_room_type + assigned_room_type + booking_changes + customer_type + average_daily_rate + total_of_special_requests, data = Hdev_train)
-rmse(lm2, Hdev_test)
 
 # All variables except arrival_date
 lm3 = lm(children ~ ., data=Hdev_train)
-rmse(lm3, Hdev_test)
 
 # Add some interactions
 lm4 = lm(children ~ . + lead_time*stays_in_weekend_nights + lead_time*stays_in_week_nights + hotel:reserved_room_type + hotel:assigned_room_type, data = Hdev_train)
-rmse(lm4, Hdev_test)
 
 # Add more interactions
 lm5 = lm(children ~ . + lead_time*stays_in_weekend_nights + lead_time*stays_in_week_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + booking_changes:meal, data = Hdev_train)
-rmse(lm5, Hdev_test)
 
 ## lasso (tried for fun)
 x = model.matrix(children ~ . + lead_time*stays_in_weekend_nights + lead_time*stays_in_week_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + booking_changes:meal, data=Hdev_train)[, -1]
@@ -223,10 +223,13 @@ hlasso <- cv.gamlr(x, y, nfold=10, family="binomial", verb = TRUE)
 coef(hlasso)
 
 lm_lasso = lm(children ~ . - lead_time - stays_in_week_nights - previous_cancellations - deposit_type - days_in_waiting_list + lead_time*stays_in_weekend_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + meal:booking_changes, data = Hdev_train)
-rmse(lm_lasso, Hdev_test)
+
+# RMSE table
+RMSE3 = tibble("model" = c("lm1", "lm2", "lm3", "lm4", "lm5", "lm_lasso"), "RMSE" = c(rmse(lm1, Hdev_test), rmse(lm2, Hdev_test), rmse(lm3, Hdev_test), rmse(lm4, Hdev_test), rmse(lm5, Hdev_test), rmse(lm_lasso, Hdev_test)))
+RMSE3.1 = kable(RMSE3, caption = "RMSE of each model, first pass")
+RMSE3.1
 
 ## Choose the three models with the lowest RMSE and check for robustness with an average RMSE from ten new train/test splits
-set.seed(1)
 rmse_sim = do(10)*{
   # fresh train/test split
   Hdev_split = initial_split(Hdev, prop = 0.8)
@@ -245,7 +248,9 @@ rmse_sim = do(10)*{
   model_errors
 }
 
-colMeans(rmse_sim)
+RMSE4 = tibble("model" = c("lm4", "lm5", "lm_lasso"), "RMSE" = colMeans(rmse_sim))
+RMSE4.1 = kable(RMSE4, caption = "Average RMSE of three best models through 10 train/test splits")
+RMSE4.1
 
 # Summary of the best model
 summary(lm5)
