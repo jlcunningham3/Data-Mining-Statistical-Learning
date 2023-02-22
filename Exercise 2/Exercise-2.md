@@ -13,15 +13,15 @@
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1</td>
-<td style="text-align: right;">66680.76</td>
+<td style="text-align: right;">66695.65</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">60312.61</td>
+<td style="text-align: right;">58250.12</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">56196.22</td>
+<td style="text-align: right;">56741.83</td>
 </tr>
 </tbody>
 </table>
@@ -39,15 +39,15 @@ RMSE of each model, first pass
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1</td>
-<td style="text-align: right;">66207.90</td>
+<td style="text-align: right;">66621.65</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">59016.66</td>
+<td style="text-align: right;">59183.64</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">57709.03</td>
+<td style="text-align: right;">57975.44</td>
 </tr>
 </tbody>
 </table>
@@ -64,32 +64,32 @@ Average RMSE through 100 train/test splits
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -240745  -33706   -5945   27398  439811 
+    ## -240633  -34410   -6080   26259  439092 
     ## 
     ## Coefficients:
     ##                                    Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                       2.559e+04  1.626e+04   1.574 0.115703    
-    ## newConstructionNo                 1.727e+04  1.206e+04   1.431 0.152529    
-    ## pctCollege                       -5.976e+02  1.833e+02  -3.260 0.001142 ** 
-    ## bedrooms                         -7.695e+03  2.969e+03  -2.591 0.009659 ** 
-    ## bathrooms                         2.550e+04  4.240e+03   6.013 2.33e-09 ***
-    ## newConstructionYes:landValue      4.557e-01  1.273e-01   3.580 0.000355 ***
-    ## newConstructionNo:landValue       1.096e+00  5.893e-02  18.598  < 2e-16 ***
-    ## age:pctCollege                    5.688e+00  2.604e+00   2.184 0.029143 *  
-    ## livingArea:centralAirYes          9.260e+01  5.272e+00  17.563  < 2e-16 ***
-    ## livingArea:centralAirNo           8.025e+01  5.384e+00  14.906  < 2e-16 ***
-    ## bedrooms:heatinghot water/steam   2.433e+03  4.170e+03   0.583 0.559676    
-    ## bedrooms:heatingelectric          1.391e+04  4.831e+03   2.879 0.004048 ** 
-    ## bathrooms:heatinghot water/steam -8.022e+03  7.146e+03  -1.123 0.261818    
-    ## bathrooms:heatingelectric        -2.675e+04  7.995e+03  -3.346 0.000841 ***
-    ## age:livingArea:centralAirYes     -5.506e-01  1.105e-01  -4.986 6.97e-07 ***
-    ## age:livingArea:centralAirNo      -1.947e-01  7.469e-02  -2.607 0.009239 ** 
+    ## (Intercept)                       1.965e+04  1.637e+04   1.200 0.230219    
+    ## newConstructionNo                 1.346e+04  1.242e+04   1.084 0.278754    
+    ## pctCollege                       -5.279e+02  1.835e+02  -2.877 0.004071 ** 
+    ## bedrooms                         -7.761e+03  3.015e+03  -2.574 0.010157 *  
+    ## bathrooms                         2.756e+04  4.301e+03   6.408 2.03e-10 ***
+    ## newConstructionYes:landValue      3.651e-01  1.228e-01   2.972 0.003006 ** 
+    ## newConstructionNo:landValue       1.044e+00  5.602e-02  18.632  < 2e-16 ***
+    ## age:pctCollege                    8.570e+00  2.623e+00   3.267 0.001114 ** 
+    ## livingArea:centralAirYes          9.274e+01  5.243e+00  17.688  < 2e-16 ***
+    ## livingArea:centralAirNo           8.341e+01  5.297e+00  15.748  < 2e-16 ***
+    ## bedrooms:heatinghot water/steam   2.741e+03  4.140e+03   0.662 0.508011    
+    ## bedrooms:heatingelectric          1.614e+04  5.205e+03   3.100 0.001973 ** 
+    ## bathrooms:heatinghot water/steam -1.114e+04  7.143e+03  -1.559 0.119222    
+    ## bathrooms:heatingelectric        -3.038e+04  8.634e+03  -3.519 0.000448 ***
+    ## age:livingArea:centralAirYes     -5.405e-01  1.185e-01  -4.563 5.50e-06 ***
+    ## age:livingArea:centralAirNo      -2.818e-01  7.225e-02  -3.900 0.000101 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 59040 on 1366 degrees of freedom
-    ## Multiple R-squared:  0.6461, Adjusted R-squared:  0.6423 
-    ## F-statistic: 166.3 on 15 and 1366 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 58820 on 1366 degrees of freedom
+    ## Multiple R-squared:  0.6555, Adjusted R-squared:  0.6517 
+    ## F-statistic: 173.3 on 15 and 1366 DF,  p-value: < 2.2e-16
 
  
 
@@ -215,191 +215,6 @@ consisting of a random sample of loans in the bank’s overall portfolio.
 
 ### 3.A: Model building
 
-    ## fold 1,2,3,4,5,6,7,8,9,10,done.
-
-    ## 180 x 1 sparse Matrix of class "dgCMatrix"
-    ##                                                      seg84
-    ## intercept                                    -3.9147152480
-    ## hotelResort_Hotel                            -0.3978244584
-    ## lead_time                                     .           
-    ## stays_in_weekend_nights                       .           
-    ## stays_in_week_nights                          .           
-    ## adults                                       -0.3257552551
-    ## mealFB                                        0.2298719821
-    ## mealHB                                        .           
-    ## mealSC                                       -0.9188971194
-    ## mealUndefined                                 .           
-    ## market_segmentComplementary                   .           
-    ## market_segmentCorporate                      -0.7907461397
-    ## market_segmentDirect                          .           
-    ## market_segmentGroups                         -0.8434113688
-    ## market_segmentOffline_TA/TO                   .           
-    ## market_segmentOnline_TA                       .           
-    ## distribution_channelDirect                    0.2285508246
-    ## distribution_channelGDS                      -0.1932651184
-    ## distribution_channelTA/TO                     .           
-    ## is_repeated_guest                            -0.6821717991
-    ## previous_cancellations                        .           
-    ## previous_bookings_not_canceled               -0.0365403406
-    ## reserved_room_typeB                           1.2886251653
-    ## reserved_room_typeC                           .           
-    ## reserved_room_typeD                          -0.6811120255
-    ## reserved_room_typeE                           .           
-    ## reserved_room_typeF                           2.7183943986
-    ## reserved_room_typeG                           1.6046067517
-    ## reserved_room_typeH                           2.7317953595
-    ## reserved_room_typeL                           .           
-    ## assigned_room_typeB                           1.5669682684
-    ## assigned_room_typeC                           0.7156068243
-    ## assigned_room_typeD                           0.8011721062
-    ## assigned_room_typeE                           0.5085761109
-    ## assigned_room_typeF                           0.9541654878
-    ## assigned_room_typeG                           0.7802199317
-    ## assigned_room_typeH                           .           
-    ## assigned_room_typeI                           .           
-    ## assigned_room_typeK                           .           
-    ## booking_changes                               0.2262601521
-    ## deposit_typeNon_Refund                        .           
-    ## deposit_typeRefundable                        .           
-    ## days_in_waiting_list                          .           
-    ## customer_typeGroup                            .           
-    ## customer_typeTransient                        0.3013098077
-    ## customer_typeTransient-Party                 -0.3169146804
-    ## average_daily_rate                            0.0088652189
-    ## required_car_parking_spacesparking            0.0672006344
-    ## total_of_special_requests                     0.4718274819
-    ## wday2                                         .           
-    ## wday3                                         .           
-    ## wday4                                        -0.0229890598
-    ## wday5                                         .           
-    ## wday6                                        -0.0045389107
-    ## wday7                                         0.1734329702
-    ## month2                                        0.3475870413
-    ## month3                                        .           
-    ## month4                                        .           
-    ## month5                                       -0.4689986027
-    ## month6                                       -0.2566478396
-    ## month7                                        0.4304503270
-    ## month8                                        0.3303142791
-    ## month9                                       -0.5252099846
-    ## month10                                      -0.1646963427
-    ## month11                                      -0.2724079419
-    ## month12                                       0.1771634361
-    ## lead_time:stays_in_weekend_nights             0.0001315055
-    ## lead_time:stays_in_week_nights                .           
-    ## stays_in_weekend_nights:stays_in_week_nights -0.0008144831
-    ## hotelResort_Hotel:reserved_room_typeB         .           
-    ## hotelResort_Hotel:reserved_room_typeC         2.3951566484
-    ## hotelResort_Hotel:reserved_room_typeD         0.2936956377
-    ## hotelResort_Hotel:reserved_room_typeE        -0.7821415538
-    ## hotelResort_Hotel:reserved_room_typeF        -3.2945623286
-    ## hotelResort_Hotel:reserved_room_typeG         1.0354643827
-    ## hotelResort_Hotel:reserved_room_typeH         0.4478936650
-    ## hotelResort_Hotel:reserved_room_typeL         .           
-    ## adults:assigned_room_typeB                   -0.7713013930
-    ## adults:assigned_room_typeC                    .           
-    ## adults:assigned_room_typeD                    .           
-    ## adults:assigned_room_typeE                    0.0072949940
-    ## adults:assigned_room_typeF                    .           
-    ## adults:assigned_room_typeG                    .           
-    ## adults:assigned_room_typeH                    0.2410869122
-    ## adults:assigned_room_typeI                    0.2473944276
-    ## adults:assigned_room_typeK                    .           
-    ## hotelResort_Hotel:assigned_room_typeB         .           
-    ## hotelResort_Hotel:assigned_room_typeC         0.5323496501
-    ## hotelResort_Hotel:assigned_room_typeD        -0.0704140324
-    ## hotelResort_Hotel:assigned_room_typeE         .           
-    ## hotelResort_Hotel:assigned_room_typeF        -0.1282459910
-    ## hotelResort_Hotel:assigned_room_typeG         0.0170954936
-    ## hotelResort_Hotel:assigned_room_typeH         .           
-    ## hotelResort_Hotel:assigned_room_typeI         .           
-    ## hotelResort_Hotel:assigned_room_typeK         .           
-    ## reserved_room_typeB:assigned_room_typeB       .           
-    ## reserved_room_typeC:assigned_room_typeB      -0.3912184609
-    ## reserved_room_typeD:assigned_room_typeB       .           
-    ## reserved_room_typeE:assigned_room_typeB       .           
-    ## reserved_room_typeF:assigned_room_typeB       .           
-    ## reserved_room_typeG:assigned_room_typeB       .           
-    ## reserved_room_typeH:assigned_room_typeB       .           
-    ## reserved_room_typeL:assigned_room_typeB       .           
-    ## reserved_room_typeB:assigned_room_typeC       .           
-    ## reserved_room_typeC:assigned_room_typeC       .           
-    ## reserved_room_typeD:assigned_room_typeC       .           
-    ## reserved_room_typeE:assigned_room_typeC       .           
-    ## reserved_room_typeF:assigned_room_typeC       .           
-    ## reserved_room_typeG:assigned_room_typeC       .           
-    ## reserved_room_typeH:assigned_room_typeC       .           
-    ## reserved_room_typeL:assigned_room_typeC       .           
-    ## reserved_room_typeB:assigned_room_typeD      -0.0028992489
-    ## reserved_room_typeC:assigned_room_typeD       0.1753602315
-    ## reserved_room_typeD:assigned_room_typeD      -0.4026740985
-    ## reserved_room_typeE:assigned_room_typeD       .           
-    ## reserved_room_typeF:assigned_room_typeD       .           
-    ## reserved_room_typeG:assigned_room_typeD       .           
-    ## reserved_room_typeH:assigned_room_typeD      -1.7351276408
-    ## reserved_room_typeL:assigned_room_typeD       .           
-    ## reserved_room_typeB:assigned_room_typeE       0.1439666929
-    ## reserved_room_typeC:assigned_room_typeE       .           
-    ## reserved_room_typeD:assigned_room_typeE       .           
-    ## reserved_room_typeE:assigned_room_typeE       0.1326236700
-    ## reserved_room_typeF:assigned_room_typeE       .           
-    ## reserved_room_typeG:assigned_room_typeE       .           
-    ## reserved_room_typeH:assigned_room_typeE       .           
-    ## reserved_room_typeL:assigned_room_typeE       .           
-    ## reserved_room_typeB:assigned_room_typeF       .           
-    ## reserved_room_typeC:assigned_room_typeF       0.7342555319
-    ## reserved_room_typeD:assigned_room_typeF       .           
-    ## reserved_room_typeE:assigned_room_typeF       .           
-    ## reserved_room_typeF:assigned_room_typeF       .           
-    ## reserved_room_typeG:assigned_room_typeF       0.3564048594
-    ## reserved_room_typeH:assigned_room_typeF       .           
-    ## reserved_room_typeL:assigned_room_typeF       .           
-    ## reserved_room_typeB:assigned_room_typeG       1.7969325005
-    ## reserved_room_typeC:assigned_room_typeG       1.0913806982
-    ## reserved_room_typeD:assigned_room_typeG       .           
-    ## reserved_room_typeE:assigned_room_typeG       .           
-    ## reserved_room_typeF:assigned_room_typeG       0.1311877703
-    ## reserved_room_typeG:assigned_room_typeG       .           
-    ## reserved_room_typeH:assigned_room_typeG       .           
-    ## reserved_room_typeL:assigned_room_typeG       .           
-    ## reserved_room_typeB:assigned_room_typeH       .           
-    ## reserved_room_typeC:assigned_room_typeH       1.7390754839
-    ## reserved_room_typeD:assigned_room_typeH       .           
-    ## reserved_room_typeE:assigned_room_typeH       .           
-    ## reserved_room_typeF:assigned_room_typeH       .           
-    ## reserved_room_typeG:assigned_room_typeH      -0.1007312532
-    ## reserved_room_typeH:assigned_room_typeH       0.1570033322
-    ## reserved_room_typeL:assigned_room_typeH       .           
-    ## reserved_room_typeB:assigned_room_typeI       .           
-    ## reserved_room_typeC:assigned_room_typeI       3.2510400182
-    ## reserved_room_typeD:assigned_room_typeI       0.7951563982
-    ## reserved_room_typeE:assigned_room_typeI       .           
-    ## reserved_room_typeF:assigned_room_typeI       .           
-    ## reserved_room_typeG:assigned_room_typeI       .           
-    ## reserved_room_typeH:assigned_room_typeI       .           
-    ## reserved_room_typeL:assigned_room_typeI       .           
-    ## reserved_room_typeB:assigned_room_typeK       1.8075774601
-    ## reserved_room_typeC:assigned_room_typeK       .           
-    ## reserved_room_typeD:assigned_room_typeK       .           
-    ## reserved_room_typeE:assigned_room_typeK       .           
-    ## reserved_room_typeF:assigned_room_typeK       .           
-    ## reserved_room_typeG:assigned_room_typeK       0.8551114518
-    ## reserved_room_typeH:assigned_room_typeK       .           
-    ## reserved_room_typeL:assigned_room_typeK       .           
-    ## assigned_room_typeB:booking_changes           0.0073354024
-    ## assigned_room_typeC:booking_changes           0.1637082883
-    ## assigned_room_typeD:booking_changes           0.1025308858
-    ## assigned_room_typeE:booking_changes           .           
-    ## assigned_room_typeF:booking_changes          -0.1221143857
-    ## assigned_room_typeG:booking_changes          -0.0700155824
-    ## assigned_room_typeH:booking_changes           .           
-    ## assigned_room_typeI:booking_changes           .           
-    ## assigned_room_typeK:booking_changes          -0.0265298553
-    ## mealFB:booking_changes                        .           
-    ## mealHB:booking_changes                        .           
-    ## mealSC:booking_changes                        .           
-    ## mealUndefined:booking_changes                 .
-
 <table>
 <caption>RMSE of each model, first pass</caption>
 <thead>
@@ -411,27 +226,27 @@ consisting of a random sample of loans in the bank’s overall portfolio.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1</td>
-<td style="text-align: right;">0.2695242</td>
+<td style="text-align: right;">0.2685675</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">0.2324706</td>
+<td style="text-align: right;">0.2325764</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">0.2315870</td>
+<td style="text-align: right;">0.2318225</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm4</td>
-<td style="text-align: right;">0.2248419</td>
+<td style="text-align: right;">0.2251520</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm5</td>
-<td style="text-align: right;">0.2236073</td>
+<td style="text-align: right;">0.2245874</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm_lasso</td>
-<td style="text-align: right;">0.2236152</td>
+<td style="text-align: right;">0.2245804</td>
 </tr>
 </tbody>
 </table>
@@ -450,15 +265,15 @@ splits</caption>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm4</td>
-<td style="text-align: right;">0.2244285</td>
+<td style="text-align: right;">0.2245480</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm5</td>
-<td style="text-align: right;">0.2240608</td>
+<td style="text-align: right;">0.2239337</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm_lasso</td>
-<td style="text-align: right;">0.2240636</td>
+<td style="text-align: right;">0.2239382</td>
 </tr>
 </tbody>
 </table>
@@ -858,26 +673,153 @@ Average RMSE of three best models through 10 train/test splits
 
 ### 3.C: Model validation step 2
 
-    ##    Fold Expected_Children Actual_Children Difference
-    ## 1     1             25.74              23       2.74
-    ## 2     2             23.89              27      -3.11
-    ## 3     3             17.16              18      -0.84
-    ## 4     4             18.66              12       6.66
-    ## 5     5             19.93              17       2.93
-    ## 6     6             24.20              23       1.20
-    ## 7     7             18.16              17       1.16
-    ## 8     8             19.57              22      -2.43
-    ## 9     9             20.61              18       2.61
-    ## 10   10             21.16              18       3.16
-    ## 11   11             18.81              16       2.81
-    ## 12   12             22.07              27      -4.93
-    ## 13   13             20.25              20       0.25
-    ## 14   14             24.18              23       1.18
-    ## 15   15             20.66              18       2.66
-    ## 16   16             20.69              23      -2.31
-    ## 17   17             18.15              15       3.15
-    ## 18   18             22.23              19       3.23
-    ## 19   19             19.61              19       0.61
-    ## 20   20             25.40              27      -1.60
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Fold</th>
+<th style="text-align: right;">Expected_Children</th>
+<th style="text-align: right;">Actual_Children</th>
+<th style="text-align: right;">Difference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">25.74</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">2.74</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">23.89</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">-3.11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">17.16</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">-0.84</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">18.66</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">6.66</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">19.93</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">2.93</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">24.20</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">1.20</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">18.16</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">1.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">19.57</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">-2.43</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">20.61</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">2.61</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">21.16</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">3.16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">18.81</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">2.81</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">22.07</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">-4.93</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">20.25</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">24.18</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">1.18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">20.66</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">2.66</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">20.69</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">-2.31</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">18.15</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">3.15</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">22.23</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">3.23</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">19.61</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0.61</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">25.40</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">-1.60</td>
+</tr>
+</tbody>
+</table>
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## -4.9263 -1.0335  1.1884  0.9565  2.8414  6.6600
+
+    ## # A tibble: 2 × 2
+    ##   `c("mean", "standard deviation")` `c(mean(diff_children), sd(diff_children))`
+    ##   <chr>                                                                   <dbl>
+    ## 1 mean                                                                    0.956
+    ## 2 standard deviation                                                      2.79
 
 ![](Exercise-2_files/figure-markdown_strict/3c-1.png)
+
+Our model predicts the number of bookings with children in a group of
+250 bookings quite well. The mean difference between predicted and
+actual number of bookings with children is just under 1, with a standard
+deviation just under 2.5. With our model, we predict the number of
+bookings with children accurately within a range of (-4, +4) for all 20
+folds with 250 bookings.
