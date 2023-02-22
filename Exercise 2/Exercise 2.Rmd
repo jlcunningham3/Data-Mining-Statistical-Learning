@@ -1,0 +1,327 @@
+---
+title: "Exercise 2"
+author: "Jack Cunningham, Ali Fazl, & Ken Noddings"
+date: "2023-02-22"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+options(`mosaic:parallelMessage` = FALSE)
+library(tidyverse)
+library(ROCR)
+library(ISLR2)
+library(lubridate)
+library(gamlr)
+library(glmnet)
+library(ggplot2)
+library(mosaic)
+library(ggmap)
+library(broom)
+library(knitr)
+library(haven)
+library(leaps)
+library(rsample)
+library(caret)
+library(modelr)
+library(parallel)
+library(ipred)
+library(chron)
+library(foreach)
+library(scales)
+data(SaratogaHouses)
+GC = read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 2/german_credit.csv")
+Hdev = read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 2/hotels_dev.csv")
+Hval = read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 2/hotels_val.csv")
+```
+
+## Exercise 1: Saratoga house prices
+
+*Build the best linear model for price that you can.*
+
+```{r 1a}
+# Split into training and testing sets
+saratoga_split = initial_split(SaratogaHouses, prop = 0.8)
+saratoga_train = training(saratoga_split)
+saratoga_test = testing(saratoga_split)
+
+# Fit to the training data# 
+#the first model is the basic 
+lm1 = lm(price ~ . - pctCollege - sewer - waterfront - landValue - newConstruction, data=saratoga_train)
+
+#the second model has a drastic change with only 6 variables 
+lm2 = lm(price ~  landValue+livingArea+bathrooms+ waterfront +centralAir, data=saratoga_train)
+
+#the third model has the min rmse
+lm3 = lm(price ~ 
+           newConstruction*landValue+ 
+           age*pctCollege +
+           age*(landValue+livingArea)*(centralAir) +
+           (livingArea)*(centralAir)+ 
+           (bedrooms+bathrooms)*(heating) - 
+           landValue - 
+           age*livingArea - 
+           landValue*age*centralAir - 
+           heating - 
+           age*lotSize, 
+           data=saratoga_train)
+
+# Root mean squared error
+RMSE1 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = c(rmse(lm1, saratoga_test), rmse(lm2, saratoga_test), rmse(lm3, saratoga_test)))
+RMSE1
+
+summary(lm3)
+
+rmse_sim = do(100)*{
+  # fresh train/test split
+  saratoga_split =  initial_split(SaratogaHouses, prop=0.8)
+  saratoga_train = training(saratoga_split)
+  saratoga_test  = testing(saratoga_split)
+  
+  # refit our models to this particular split
+  lm1 = update(lm1, data=saratoga_train)
+  lm2 = update(lm2, data=saratoga_train)
+  lm3 = update(lm3, data=saratoga_train)
+  
+  
+  # collect the model errors in a single vector
+  model_errors = c(rmse(lm1, saratoga_test), rmse(lm2, saratoga_test), rmse(lm3, saratoga_test))
+  
+  # return the model errors
+  model_errors
+}
+
+# average performance across the splits:
+RMSE2 = tibble("model" = c("lm1", "lm2", "lm3"), "RMSE" = colMeans(rmse_sim))
+RMSE2
+```
+
+&nbsp;
+
+*Now build the best K-nearest-neighbor regression model for price that you can.*
+
+```{r 1b}
+############scale################
+Saratoga_scale=SaratogaHouses %>%
+  mutate(across((!price & !heating & !fuel  & !sewer & !waterfront & !newConstruction & !centralAir), scale))
+#################################
+
+#####################model with age############################
+k_values <- data.frame(k = 5:30)
+trControl <- trainControl(method = "cv", number =100, returnResamp = "all")
+fit <- train(price ~ age + landValue + livingArea + bathrooms + waterfront + centralAir,
+             method = "knn", tuneGrid = k_values,
+             trControl = trControl, metric = "RMSE", data = Saratoga_scale)
+
+RMSE5_30 <- ggplot(data = fit[["results"]], aes(x = k, y = RMSE))+
+  geom_point()+
+  scale_x_continuous(name = "Value of K",
+                     breaks = c(5:30),
+                     labels = waiver())
+
+k_valuesLong <- data.frame(k = 1:100)
+trControl <- trainControl(method = "cv", number =20, returnResamp = "all")
+fitLong <- train(price ~ age + landValue + livingArea + bathrooms + waterfront + centralAir,
+                 method = "knn", tuneGrid = k_valuesLong,
+                 trControl = trControl, metric = "RMSE", data = Saratoga_scale)
+
+ggplot(data = fitLong[["results"]], aes(x = k, y = RMSE))+
+  geom_line()
+```
+
+&nbsp;
+
+*Which model seems to do better at achieving lower out-of-sample mean-squared error? Write a report on your findings as if you were describing your price-modeling strategies for a local taxing authority, who needs to form predicted market values for properties in order to know how much to tax them. Keep the main focus on the conclusions and model performance; any relevant technical details should be put in an appendix.*
+
+In attempting to develop a model for pricing real estate in Saratoga, NY, we worked with a data set comprising features including lot size, land value, age of construction, quantity of bed and bathrooms, among others, for 1,728 houses in the area with known sale prices. In order to form estimations of the likely out-of-sample performance of each model, we split the data into multiple testing and training sets. The root mean squared error (RMSE) values quoted below are averages from many training and testing iterations for each model and represent how far away from the true value of the home in dollars that we expect the given model to be on average if used to predict real-world data.
+
+We first fitted linear, ordinary least squares models. These models attempt to establish linear relationships between given factors in the data, and/or given interactions between the factors, and the prediction variable, in this case, price. Of the models we tested, the best linear model utilized 16 different factors and interactions, with an average RMSE of approximately 58,000.
+
+We also fitted predictive models using K-nearest-neighbor regression. This form of model uses the given factors from the data to form a measure of similarity, and predicts the price of an unknown home by calculating the average price of the “K” most similar known home prices. We tested values of K from 5 to 30 and compiled the graph below:
+
+```{r 1c}
+RMSE5_30
+```
+ 
+The best model is found at k = 18, with an RMSE of just above 56,000. This also outperforms our best linear model, therefore we believe that K-nearest-neighbor regression should be used to predict taxable market values.
+
+&nbsp;
+
+## Exercise 2: Classification and retrospective sampling
+
+*Make a bar plot of default probability by credit history.*
+
+```{r 2.1}
+Default_p = mean(Default ~ history, data = GC)
+barplot(Default_p, xlab = "Credit History", ylab = "Default Probability", main = "Default Probability by Credit History")
+```
+
+&nbsp;
+
+*Build a logistic regression model for predicting default probability, using the variables duration + amount + installment + age + history + purpose + foreign.*
+
+```{r 2.2}
+logit_GC <- glm(Default ~ duration + amount + installment + age + history + purpose + foreign, data = GC, family = "binomial")
+summary(logit_GC)
+```
+
+&nbsp;
+
+*What do you notice about the history variable vis-a-vis predicting defaults? What do you think is going on here? In light of what you see here, do you think this data set is appropriate for building a predictive model of defaults, if the purpose of the model is to screen prospective borrowers to classify them into "high" versus "low" probability of default? Why or why not---and if not, would you recommend any changes to the bank's sampling scheme?*
+
+The coefficients on historypoor and historyterrible are significant and negative. This implies that borrowers with poor or terrible credit histories are less likely to default, on average, than borrowers with good credit histories. This is strange, because the purpose of credit history is to help banks determine the likelihood of default: people with good credit should default at much lower rates than people with poor or terrible credit, not the other way around.
+
+I don't think this dataset is appropriate for building a predictive model of defaults. Instead, I would recommend the bank use a dataset consisting of a random sample of loans in the bank's overall portfolio (perhaps larger than n = 1000, if possible, to ensure a high enough number of defaulted loans are included).
+
+&nbsp;
+
+## Exercise 3: Children and hotel reservations
+
+### 3.A: Model building
+
+```{r 3a}
+# Add time factors
+Hdev = mutate(Hdev,
+              wday = wday(arrival_date) %>% factor(),
+              month = month(arrival_date) %>% factor()) 
+
+Hdev = Hdev %>%
+  select(-arrival_date)
+
+# Initial train-test split of the hotels_dev data
+Hdev_split = initial_split(Hdev, prop = 0.8)
+Hdev_train = training(Hdev_split)
+Hdev_test = testing(Hdev_split)
+
+# Simplest linear model
+lm1 = lm(children ~ market_segment + adults + customer_type + is_repeated_guest, data=Hdev_train)
+rmse(lm1, Hdev_test)
+
+# Add more variables
+lm2 = lm(children ~ hotel + adults + meal + is_repeated_guest + reserved_room_type + assigned_room_type + booking_changes + customer_type + average_daily_rate + total_of_special_requests, data = Hdev_train)
+rmse(lm2, Hdev_test)
+
+# All variables except arrival_date
+lm3 = lm(children ~ ., data=Hdev_train)
+rmse(lm3, Hdev_test)
+
+# Add some interactions
+lm4 = lm(children ~ . + lead_time*stays_in_weekend_nights + lead_time*stays_in_week_nights + hotel:reserved_room_type + hotel:assigned_room_type, data = Hdev_train)
+rmse(lm4, Hdev_test)
+
+# Add more interactions
+lm5 = lm(children ~ . + lead_time*stays_in_weekend_nights + lead_time*stays_in_week_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + booking_changes:meal, data = Hdev_train)
+rmse(lm5, Hdev_test)
+
+## lasso (tried for fun)
+x = model.matrix(children ~ . + lead_time*stays_in_weekend_nights + lead_time*stays_in_week_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + booking_changes:meal, data=Hdev_train)[, -1]
+y = Hdev_train$children
+
+set.seed(1)
+hlasso <- cv.gamlr(x, y, nfold=10, family="binomial", verb = TRUE)
+coef(hlasso)
+
+lm_lasso = lm(children ~ . - lead_time - stays_in_week_nights - previous_cancellations - deposit_type - days_in_waiting_list + lead_time*stays_in_weekend_nights + stays_in_weekend_nights*stays_in_week_nights + hotel:reserved_room_type + adults:assigned_room_type + hotel:assigned_room_type + reserved_room_type:assigned_room_type + booking_changes:assigned_room_type + meal:booking_changes, data = Hdev_train)
+rmse(lm_lasso, Hdev_test)
+
+## Choose the three models with the lowest RMSE and check for robustness with an average RMSE from ten new train/test splits
+set.seed(1)
+rmse_sim = do(10)*{
+  # fresh train/test split
+  Hdev_split = initial_split(Hdev, prop = 0.8)
+  Hdev_train = training(Hdev_split)
+  Hdev_test = testing(Hdev_split)
+  
+  # refit our models to this particular split
+  lm4 = update(lm4, data=Hdev_train)
+  lm5 = update(lm5, data=Hdev_train)
+  lm_lasso = update(lm_lasso, data=Hdev_train)
+
+  # collect the model errors in a single vector
+  model_errors = c(rmse(lm4, Hdev_test), rmse(lm5, Hdev_test), rmse(lm_lasso, Hdev_test))
+  
+  # return the model errors
+  model_errors
+}
+
+colMeans(rmse_sim)
+
+# Summary of the best model
+summary(lm5)
+```
+
+
+### 3.B: Model validation step 1
+
+
+```{r 3b}
+# Include the same new variables in hotels_val as we did in hotels_dev
+Hval = mutate(Hval,
+              wday = wday(arrival_date) %>% factor(),     
+              month = month(arrival_date) %>% factor())  
+
+# Validate model performance of the best model on the validation dataset
+lm5_response_scores = predict(lm5, Hval, type="response")
+
+# Produce an ROC curve for the best model's performance
+pred = prediction(lm5_response_scores, Hval$children)
+roc = performance(pred,"tpr","fpr")
+plot(roc, colorize = T, lwd = 2)+
+  abline(a = 0, b = 1) 
+```
+
+
+
+&nbsp;
+
+### 3.C: Model validation step 2
+
+```{r 3c}
+# Create 20 folds of the dataset
+folds <- createFolds(Hval$children, k = 20)
+
+# Initialize a vector to store the results
+expected_children <- vector("numeric", length = length(folds))
+actual_children <- vector("numeric", length = length(folds))
+diff_children <- vector("numeric", length = length(folds))
+
+# Loop over each fold
+set.seed(1)
+for (i in seq_along(folds)) {
+  # Get the training and testing indices for this fold
+  test_indices <- folds[[i]]
+  train_indices <- setdiff(seq_len(nrow(Hval)), test_indices)
+  
+  # Make predictions on the testing data
+  test_data <- Hval[test_indices, ]
+  predictions <- predict(lm5, newdata = test_data, type = "response")
+  
+  # Sum up the predicted probabilities for bookings with children
+  expected_children[i] <- sum(predictions)
+  
+  # Calculate the actual number of bookings with children in this fold
+  actual_children[i] <- sum(test_data$children)
+  
+  # Store the difference between expected and actual children in the results vector
+  diff_children[i] <- expected_children[i] - actual_children[i]
+}
+
+# Create a table of the results
+results_table <- data.frame(
+  Fold = 1:20,
+  Expected_Children = round(expected_children, 2),
+  Actual_Children = actual_children,
+  Difference = round(diff_children, 2)
+)
+
+# Print out the table
+print(results_table)
+
+# Create a bar chart of the differences between expected and actual children
+ggplot(results_table, aes(x = Fold, y = Difference)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Fold", y = "Expected - Actual Children")
+```
+
+
