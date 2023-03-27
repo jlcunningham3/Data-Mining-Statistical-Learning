@@ -106,39 +106,39 @@ and the larger the increase, the bigger the effect on crime.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1 (baseline)</td>
-<td style="text-align: right;">27.39341</td>
+<td style="text-align: right;">19.81470</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">27.48432</td>
+<td style="text-align: right;">19.85939</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">27.50971</td>
+<td style="text-align: right;">19.84933</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">32.01659</td>
+<td style="text-align: right;">22.76814</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree2</td>
-<td style="text-align: right;">32.35450</td>
+<td style="text-align: right;">22.85653</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">25.53912</td>
+<td style="text-align: right;">18.79479</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">28.05855</td>
+<td style="text-align: right;">22.10252</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_boost2</td>
-<td style="text-align: right;">31.68655</td>
+<td style="text-align: right;">22.83235</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost3</td>
-<td style="text-align: right;">31.73855</td>
+<td style="text-align: right;">22.88528</td>
 </tr>
 </tbody>
 </table>
@@ -162,15 +162,15 @@ models, one random forest, and three gradient-boosted models.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">26.64949</td>
+<td style="text-align: right;">25.82768</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">23.25155</td>
+<td style="text-align: right;">22.56781</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">25.62078</td>
+<td style="text-align: right;">25.05192</td>
 </tr>
 </tbody>
 </table>
@@ -322,9 +322,7 @@ are many irrelevant features in the data. To address this, we use
 ensemble methods such as random forests or gradient boosting, which
 combine the predictions of multiple trees to improve performance.
 
-    ## [1] 1145.938
-
-    ## [1] 939.7867
+    ## [1] 1012.857
 
  
 
@@ -333,9 +331,9 @@ variables, and the second includes some features (City\_Market\_Rent ,
 age, size+ class\_a, class\_b, Electricity\_Costs, green\_rating) that
 seem to be effective on the dependent variable.
 
-    ## [1] 921.2606
+    ## [1] 793.5497
 
-    ## [1] 1036.544
+    ## [1] 876.833
 
 ![](Problem-Set-3_files/figure-markdown_strict/3.3-1.png)
 
@@ -343,21 +341,7 @@ seem to be effective on the dependent variable.
 
 And finally, we used another ensemble method, Boosted trees.
 
-    ## Distribution not specified, assuming gaussian ...
-
-    ## [1] 1106.191
-
-![](Problem-Set-3_files/figure-markdown_strict/3.4-1.png)
-
-    ## [1] 103
-    ## attr(,"smoother")
-    ## Call:
-    ## loess(formula = object$oobag.improve ~ x, enp.target = min(max(4, 
-    ##     length(x)/10), 50))
-    ## 
-    ## Number of Observations: 500 
-    ## Equivalent Number of Parameters: 39.85 
-    ## Residual Standard Error: 949.5
+    ## [1] 986.8264
 
  
 
@@ -382,8 +366,8 @@ information about the status of a green certificate, the error of the
 predictions changes less than the other features.
 
     ##   green_rating     yhat
-    ## 1            0 2396.901
-    ## 2            1 2455.084
+    ## 1            0 2398.287
+    ## 2            1 2433.065
 
 ![](Problem-Set-3_files/figure-markdown_strict/3.5-1.png)
 
