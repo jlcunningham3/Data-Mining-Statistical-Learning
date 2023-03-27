@@ -185,6 +185,32 @@ This prediction has implications for policymakers. In particular, when these ind
 
 ### Write a short report, no more than the equivalent of about 4 pages, detailing your methods, modeling choice, and conclusions.
 
+## Introduction
+
+We are working on the data set on green buildings, which contains data on 7,894 commercial rental properties from across the United States. Of these, 685 properties have been awarded either LEED or EnergyStar certification as green buildings.
+
+The goal is to build the best predictive model possible for revenue per square foot per calendar year, and to use this model to quantify the average change in rental income per square foot associated with green certification, holding other features of the building constant.
+
+## Importance
+
+Urbanization is forecast to continue: in 2010, slightly over 50% of the world’s population lived in urban areas, and by 2050, the corresponding figure is projected to be already over 66%. Currently, cities and built environments use approximately 75% of generated energy and produce 60–70% of greenhouse gas emissions. Buildings account for approximately 40% of energy use and carbon emissions. At the same time, the real estate sector comprises approximately 60% of national, corporate, and individual wealth, totaling over 200 trillion USD. Moreover, yearly construction-related global spending equals 10 trillion USD, corresponding approximately to 13% of GDP. Thus, enhancing sustainability in built environments matters, and property investors can choose to make a change for the better by allocating assets to sustainable properties and enhancing the sustainability of their existing properties (Leskinen et. al, 2020).
+
+In commercial real estate, issues of eco-friendliness are intimately tied up with ordinary decisions about how to allocate capital. Every new project involves negotiating a trade-off between costs incurred and benefits realized over the lifetime of the building. In this context, the decision to invest in eco-friendly buildings could pay off in many possible ways. Of course, at the end of the day, tenants may or may not be willing to pay a premium for rental space in green buildings. We can only find out by carefully examining data on the commercial real estate market.
+
+At first look, it seems that having a green certificate has a considerable effect on the profitability of a home (Box Plot and difference in the means). But we should examine this effect, since this effect can be correlated with the other features, and the change in profitability is not due to the direct effect of certification.
+
+## Data 
+
+The file greenbuildings.csv contains data on 7,894 commercial rental properties from across the United States. Of these, 685 properties have been awarded either LEED or EnergyStar certification as green buildings. The basic idea is that a commercial property can receive a green certification if its energy efficiency, carbon footprint, site selection, and building materials meet certain environmental benchmarks.
+
+To employ the data in our models, we should work on the data and modify some features.
+The "mutate" function is used to create (modify) columns:
+-	"Revenue = leasing_rate * Rent ".
+-	Through the "across" function, we apply "factor" to (renovated, class_a, class_b, LEED, Energystar, green_rating, net, amenities), which will convert them to factors.  
+
+The "select" function is used to select columns from the data frame. In this case, the "-" sign is used to indicate that columns should be excluded from the selection. The columns being excluded are "CS_PropertyID", "Rent", and "leasing_rate". Because the first is only the ID of homes, and the others are used in the definition of Revenue. So, we should exclude them from the features we want to use as independent variables.
+
+
 ```{r 3.1}
 #define revenue per square foot per calendar year
 ##This will add two new columns renovated and class_a to the greenbuildings data frame,
@@ -192,8 +218,7 @@ This prediction has implications for policymakers. In particular, when these ind
 ##This code uses across() to apply the factor() function to columns specified by name in a vector. 
 ##The resulting data frame has all the specified columns converted to factors.
 greenbuildings <-greenbuildings%>%
-  mutate( Revenue = leasing_rate * Rent, 
-          green_certification = ifelse(green_rating, "Pass", "Fail"),
+  mutate( Revenue = leasing_rate * Rent,
           across(c(renovated, class_a, class_b, LEED, Energystar, 
                    green_rating, net, amenities), factor))
 
@@ -201,76 +226,113 @@ greenbuildings <-greenbuildings%>%
 greenbuildings <- greenbuildings %>% 
   select(-CS_PropertyID, -Rent, -leasing_rate)
 
+
 #see the revenue based on green certification
 ggplot(greenbuildings) + 
-  geom_boxplot(aes(x = green_certification, y =Revenue))+ 
+  geom_boxplot(aes(x = green_rating, y =Revenue))+ 
   labs(x="green certification",
        y="revenue per square foot per calendar year",
        title="revenue based on green certification")
+##It’s a little bit hard to tell from this boxplot because these data distributions have such long upper tails 
+##But based on the plot, it looks as though the green buildings enjoy a slightly higher average revenue per square foot.
+diffmean(Revenue ~ green_rating, data=greenbuildings)
+
 
 buildings_split =  initial_split(greenbuildings, prop=0.8)
 buildings_train = training(buildings_split)
 buildings_test  = testing(buildings_split)
-
-# fit a linear regression
-lm4=lm(Revenue ~ .,data= buildings_train)
-
-set.seed(3)
-# fit a single tree
-buildings.tree0 = rpart(Revenue ~ .,
-                        data=buildings_train, control = rpart.control(cp = 0.00001))
-modelr::rmse(buildings.tree0, buildings_test)
-
-set.seed(3)
-# fit Random Forest
-buildings.forest0 = randomForest(Revenue ~ ., data=buildings_train,  na.action = na.exclude)
-
-buildings.forest1 = randomForest(Revenue ~ City_Market_Rent + Electricity_Costs + size + stories + age + green_rating, data=buildings_train, importance = TRUE)
-
-buildings.forest2 = randomForest(Revenue ~ City_Market_Rent + age + renovated + amenities + class_a + class_b + LEED + Energystar + total_dd_07, data=buildings_train, importance = TRUE)
-
-# out-of-sample fit
-RMSE4 = tibble("model" = c("lm (baseline)", "buildings.tree0", "buildings.forest0", "buildings.forest1", "buildings.forest2"), "RMSE" = c(rmse(lm4, buildings_test), rmse(buildings.tree0, buildings_test), rmse(buildings.forest0, buildings_test), rmse(buildings.forest1, buildings_test), rmse(buildings.forest2, buildings_test)))
-RMSE4.1 = kable(RMSE4, caption = "RMSE of each model, first pass")
-RMSE4.1
-
-# variable importance measures
-# how much does mean-squared error increase when we ignore a variable?
-varImpPlot(buildings.forest1, type=1)
-
-# partial dependence plots
-# these are trying to isolate the partial effect of specific features
-# on the outcome partialPlot(buildings.forest, buildings_test, 'City_Market_Rent', las=1)
-partialPlot(buildings.forest1, buildings_test, 'City_Market_Rent', las=1)
-partialPlot(buildings.forest1, buildings_test, 'green_rating', las=1)
-
-p1 = pdp::partial(buildings.forest1, pred.var = 'City_Market_Rent', n.trees=350)
-ggplot(p1) + geom_point(mapping=aes(x= City_Market_Rent, y=yhat))
-
-p2 = pdp::partial(buildings.forest1, pred.var = 'green_rating', n.trees=350)
-ggplot(p2) + geom_point(mapping=aes(x=green_rating, y=yhat))
 ```
 
 &nbsp;
 
-Our best model above is a random forest. 
+## Modeling 
 
-Comparing with a boosted regression tree:
+Unlike linear regression models, decision trees are not limited to modeling linear relationships and can capture more complex patterns in the data. Since in this model, there are interactions between the features that cannot be easily modeled using linear, decision tree models can be good options.
 
-``` {r 3.2}
-# compare with boosted regression trees
-boost_buildings = gbm(Revenue ~ City_Market_Rent + age+ renovated + amenities+class_a+class_b + green_rating + total_dd_07, data = buildings_train, distribution='gaussian', interaction.depth=4, n.trees=500, shrinkage=.05)
+One of the advantages of decision tree models is that they can help identify the most important features for predicting the target variable. In this context, decision tree models help us to identify the real effect of green certification on the profit of a home. 
+We have applied three techniques for building tree models. 
 
-#  error curve -- 
-gbm.perf(boost_buildings)
+First, we started with a single tree model, which included all the variables. To have a better comparison, we run a single tree ten times, and we use the average of their RMSEs. 
+Decision trees can also be prone to overfitting, especially when the tree becomes very deep or when there are many irrelevant features in the data. To address this, we use ensemble methods such as random forests or gradient boosting, which combine the predictions of multiple trees to improve performance.
 
-yhat_test_gbm = predict(boost_buildings, buildings_test, n.trees=100)
+```{r 3.2}
+# fit a single tree
+buildings.tree = rpart(Revenue ~ .,
+                        data=buildings_train, control = rpart.control(cp = 0.00001))
+modelr::rmse(buildings.tree, buildings_test)
 
-# RMSE
-rmse(boost_buildings, buildings_test)
 
-plot(boost_buildings, 'City_Market_Rent')
-plot(boost_buildings, 'green_rating')
+# ten times iterations for finding the average RMSE
+rmse_values <- numeric(10)
+for (i in 1:10) {
+  buildings_split =  initial_split(greenbuildings, prop=0.8)
+  buildings_train = training(buildings_split)
+  buildings_test  = testing(buildings_split)
+  
+  tree_model = rpart(Revenue ~ ., data = buildings_train, control = rpart.control(cp = 0.00001))
+    rmse_values[i] = modelr::rmse(tree_model, buildings_test)
+}
+avg_rmse <- mean(rmse_values)
+print(avg_rmse)
 ```
 
+&nbsp;
 
+We define two different random forests; the first is included all the variables, and the second includes some features (City_Market_Rent , age, size+ class_a, class_b, Electricity_Costs, green_rating) that seem to be effective on the dependent variable. 
+
+```{r 3.3}
+
+
+# fit Random Forest, all variables are included
+buildings.forest0 = randomForest(Revenue ~ ., data=buildings_train,  na.action = na.exclude)
+modelr::rmse(buildings.forest0, buildings_test)  
+
+
+# fit Random Forest, more effective variables are included
+buildings.forest1 = randomForest(Revenue ~ City_Market_Rent + age  + size+ class_a+class_b+ Electricity_Costs+ green_rating,
+                                 data=buildings_train, importance = TRUE)
+modelr::rmse(buildings.forest1, buildings_test)  
+
+# variable importance measures
+# how much does mean-squared error increase when we ignore a variable?
+varImpPlot(buildings.forest1, type=1)
+```
+
+&nbsp;
+
+And finally, we used another ensemble method, Boosted trees.
+
+```{r 3.4}
+#compare with boosted regression trees
+boost_buildings = gbm(Revenue ~.,
+                      data = buildings_train,
+                      interaction.depth=4, n.trees=500, shrinkage=.05)
+# RMSE of boosted regression trees
+rmse(boost_buildings, buildings_test)
+# we can see its error curve -- 
+gbm.perf(boost_buildings)
+```
+
+&nbsp;
+
+## Conclusion
+
+Our measure for comparing the results are their RMSEs. Based on the results of the simulations, the random forest model included all variable has the lowest out of the sample RMSE. The other random forest has the second-best result, which shows proves the better performance of the random forest comparing the other decision trees models. So, to predict the revenue per square foot per calendar year, we will apply the comprehensive random forest model. 
+
+Back to the main question, how much does a green certificate affect profitability?
+
+Now, we have  reliable tools to see the real (partial) effect of the green certificate. At first, we can check this effect through “varImpPlot”,  which shows how much mean-squared error increases when we ignore a variable, to human language it means that without any information about the status of a green certificate, the error of the predictions changes less than the other features.
+
+```{r 3.5}
+# partial dependence plot
+# isolate the partial effect of specific features
+p1 = pdp::partial(buildings.forest0, pred.var = 'green_rating', n.trees=350)
+p1
+plot(p1, 'green_rating', ylim=c(0, 3000), xlab = "Green Certificate", ylab = "Revenue", main = "Partial dependence plot for green rating and revenue")
+```
+
+&nbsp;
+
+Then, we can calculate the partial dependence shows the average response of the model to changes in the green certificate variable while holding all other predictor variables constant. The result can change based on the trained data, but changes between having vs not-having the certificate is less than 50$ in revenue per square foot per calendar year! 
+
+The result is interesting because at first look, comparing the mean of two categories (having vs not-having the certificate) indicates 300$ revenue per square foot per calendar year; which can be misleading compared to the real effect that the random forest model gives us!

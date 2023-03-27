@@ -106,39 +106,39 @@ and the larger the increase, the bigger the effect on crime.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1 (baseline)</td>
-<td style="text-align: right;">22.13330</td>
+<td style="text-align: right;">27.39341</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">22.17757</td>
+<td style="text-align: right;">27.48432</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">22.25359</td>
+<td style="text-align: right;">27.50971</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">28.80949</td>
+<td style="text-align: right;">32.01659</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree2</td>
-<td style="text-align: right;">28.71394</td>
+<td style="text-align: right;">32.35450</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">24.15293</td>
+<td style="text-align: right;">25.53912</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">27.36428</td>
+<td style="text-align: right;">28.05855</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_boost2</td>
-<td style="text-align: right;">26.24023</td>
+<td style="text-align: right;">31.68655</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost3</td>
-<td style="text-align: right;">26.29683</td>
+<td style="text-align: right;">31.73855</td>
 </tr>
 </tbody>
 </table>
@@ -162,15 +162,15 @@ models, one random forest, and three gradient-boosted models.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">23.28363</td>
+<td style="text-align: right;">26.64949</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">21.72325</td>
+<td style="text-align: right;">23.25155</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">23.66164</td>
+<td style="text-align: right;">25.62078</td>
 </tr>
 </tbody>
 </table>
@@ -224,55 +224,132 @@ facilities.
 
 ### Write a short report, no more than the equivalent of about 4 pages, detailing your methods, modeling choice, and conclusions.
 
+## Introduction
+
+We are working on the data set on green buildings, which contains data
+on 7,894 commercial rental properties from across the United States. Of
+these, 685 properties have been awarded either LEED or EnergyStar
+certification as green buildings.
+
+The goal is to build the best predictive model possible for revenue per
+square foot per calendar year, and to use this model to quantify the
+average change in rental income per square foot associated with green
+certification, holding other features of the building constant.
+
+## Importance
+
+Urbanization is forecast to continue: in 2010, slightly over 50% of the
+world’s population lived in urban areas, and by 2050, the corresponding
+figure is projected to be already over 66%. Currently, cities and built
+environments use approximately 75% of generated energy and produce
+60–70% of greenhouse gas emissions. Buildings account for approximately
+40% of energy use and carbon emissions. At the same time, the real
+estate sector comprises approximately 60% of national, corporate, and
+individual wealth, totaling over 200 trillion USD. Moreover, yearly
+construction-related global spending equals 10 trillion USD,
+corresponding approximately to 13% of GDP. Thus, enhancing
+sustainability in built environments matters, and property investors can
+choose to make a change for the better by allocating assets to
+sustainable properties and enhancing the sustainability of their
+existing properties (Leskinen et. al, 2020).
+
+In commercial real estate, issues of eco-friendliness are intimately
+tied up with ordinary decisions about how to allocate capital. Every new
+project involves negotiating a trade-off between costs incurred and
+benefits realized over the lifetime of the building. In this context,
+the decision to invest in eco-friendly buildings could pay off in many
+possible ways. Of course, at the end of the day, tenants may or may not
+be willing to pay a premium for rental space in green buildings. We can
+only find out by carefully examining data on the commercial real estate
+market.
+
+At first look, it seems that having a green certificate has a
+considerable effect on the profitability of a home (Box Plot and
+difference in the means). But we should examine this effect, since this
+effect can be correlated with the other features, and the change in
+profitability is not due to the direct effect of certification.
+
+## Data
+
+The file greenbuildings.csv contains data on 7,894 commercial rental
+properties from across the United States. Of these, 685 properties have
+been awarded either LEED or EnergyStar certification as green buildings.
+The basic idea is that a commercial property can receive a green
+certification if its energy efficiency, carbon footprint, site
+selection, and building materials meet certain environmental benchmarks.
+
+To employ the data in our models, we should work on the data and modify
+some features. The “mutate” function is used to create (modify)
+columns: - “Revenue = leasing\_rate \* Rent”. - Through the “across”
+function, we apply “factor” to (renovated, class\_a, class\_b, LEED,
+Energystar, green\_rating, net, amenities), which will convert them to
+factors.
+
+The “select” function is used to select columns from the data frame. In
+this case, the “-” sign is used to indicate that columns should be
+excluded from the selection. The columns being excluded are
+“CS\_PropertyID”, “Rent”, and “leasing\_rate”. Because the first is only
+the ID of homes, and the others are used in the definition of Revenue.
+So, we should exclude them from the features we want to use as
+independent variables.
+
 ![](Problem-Set-3_files/figure-markdown_strict/3.1-1.png)
 
-    ## [1] 871.8804
-
-<table>
-<caption>RMSE of each model, first pass</caption>
-<thead>
-<tr class="header">
-<th style="text-align: left;">model</th>
-<th style="text-align: right;">RMSE</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">lm (baseline)</td>
-<td style="text-align: right;">970.7020</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">buildings.tree0</td>
-<td style="text-align: right;">871.8804</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">buildings.forest0</td>
-<td style="text-align: right;">694.7563</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">buildings.forest1</td>
-<td style="text-align: right;">694.5296</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">buildings.forest2</td>
-<td style="text-align: right;">845.5001</td>
-</tr>
-</tbody>
-</table>
-
-RMSE of each model, first pass
-
-![](Problem-Set-3_files/figure-markdown_strict/3.1-2.png)![](Problem-Set-3_files/figure-markdown_strict/3.1-3.png)![](Problem-Set-3_files/figure-markdown_strict/3.1-4.png)![](Problem-Set-3_files/figure-markdown_strict/3.1-5.png)![](Problem-Set-3_files/figure-markdown_strict/3.1-6.png)
+    ## diffmean 
+    ##  320.519
 
  
 
-Our best model above is a random forest.
+## Modeling
 
-Comparing with a boosted regression tree:
+Unlike linear regression models, decision trees are not limited to
+modeling linear relationships and can capture more complex patterns in
+the data. Since in this model, there are interactions between the
+features that cannot be easily modeled using linear, decision tree
+models can be good options.
 
-![](Problem-Set-3_files/figure-markdown_strict/3.2-1.png)
+One of the advantages of decision tree models is that they can help
+identify the most important features for predicting the target variable.
+In this context, decision tree models help us to identify the real
+effect of green certification on the profit of a home. We have applied
+three techniques for building tree models.
 
-    ## [1] 73
+First, we started with a single tree model, which included all the
+variables. To have a better comparison, we run a single tree ten times,
+and we use the average of their RMSEs. Decision trees can also be prone
+to overfitting, especially when the tree becomes very deep or when there
+are many irrelevant features in the data. To address this, we use
+ensemble methods such as random forests or gradient boosting, which
+combine the predictions of multiple trees to improve performance.
+
+    ## [1] 1145.938
+
+    ## [1] 939.7867
+
+ 
+
+We define two different random forests; the first is included all the
+variables, and the second includes some features (City\_Market\_Rent ,
+age, size+ class\_a, class\_b, Electricity\_Costs, green\_rating) that
+seem to be effective on the dependent variable.
+
+    ## [1] 921.2606
+
+    ## [1] 1036.544
+
+![](Problem-Set-3_files/figure-markdown_strict/3.3-1.png)
+
+ 
+
+And finally, we used another ensemble method, Boosted trees.
+
+    ## Distribution not specified, assuming gaussian ...
+
+    ## [1] 1106.191
+
+![](Problem-Set-3_files/figure-markdown_strict/3.4-1.png)
+
+    ## [1] 103
     ## attr(,"smoother")
     ## Call:
     ## loess(formula = object$oobag.improve ~ x, enp.target = min(max(4, 
@@ -280,8 +357,46 @@ Comparing with a boosted regression tree:
     ## 
     ## Number of Observations: 500 
     ## Equivalent Number of Parameters: 39.85 
-    ## Residual Standard Error: 914
+    ## Residual Standard Error: 949.5
 
-    ## [1] 985.2568
+ 
 
-![](Problem-Set-3_files/figure-markdown_strict/3.2-2.png)![](Problem-Set-3_files/figure-markdown_strict/3.2-3.png)
+## Conclusion
+
+Our measure for comparing the results are their RMSEs. Based on the
+results of the simulations, the random forest model included all
+variable has the lowest out of the sample RMSE. The other random forest
+has the second-best result, which shows proves the better performance of
+the random forest comparing the other decision trees models. So, to
+predict the revenue per square foot per calendar year, we will apply the
+comprehensive random forest model.
+
+Back to the main question, how much does a green certificate affect
+profitability?
+
+Now, we have reliable tools to see the real (partial) effect of the
+green certificate. At first, we can check this effect through
+“varImpPlot”, which shows how much mean-squared error increases when we
+ignore a variable, to human language it means that without any
+information about the status of a green certificate, the error of the
+predictions changes less than the other features.
+
+    ##   green_rating     yhat
+    ## 1            0 2396.901
+    ## 2            1 2455.084
+
+![](Problem-Set-3_files/figure-markdown_strict/3.5-1.png)
+
+ 
+
+Then, we can calculate the partial dependence shows the average response
+of the model to changes in the green certificate variable while holding
+all other predictor variables constant. The result can change based on
+the trained data, but changes between having vs not-having the
+certificate is less than 50$ in revenue per square foot per calendar
+year!
+
+The result is interesting because at first look, comparing the mean of
+two categories (having vs not-having the certificate) indicates 300$
+revenue per square foot per calendar year; which can be misleading
+compared to the real effect that the random forest model gives us!
