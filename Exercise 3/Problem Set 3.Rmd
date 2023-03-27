@@ -256,13 +256,7 @@ First, we started with a single tree model, which included all the variables. To
 Decision trees can also be prone to overfitting, especially when the tree becomes very deep or when there are many irrelevant features in the data. To address this, we use ensemble methods such as random forests or gradient boosting, which combine the predictions of multiple trees to improve performance.
 
 ```{r 3.2}
-# fit a single tree
-buildings.tree = rpart(Revenue ~ .,
-                        data=buildings_train, control = rpart.control(cp = 0.00001))
-modelr::rmse(buildings.tree, buildings_test)
-
-
-# ten times iterations for finding the average RMSE
+# ten times iterations for finding the average RMSE of a single tree
 rmse_values <- numeric(10)
 for (i in 1:10) {
   buildings_split =  initial_split(greenbuildings, prop=0.8)
@@ -281,8 +275,6 @@ print(avg_rmse)
 We define two different random forests; the first is included all the variables, and the second includes some features (City_Market_Rent , age, size+ class_a, class_b, Electricity_Costs, green_rating) that seem to be effective on the dependent variable. 
 
 ```{r 3.3}
-
-
 # fit Random Forest, all variables are included
 buildings.forest0 = randomForest(Revenue ~ ., data=buildings_train,  na.action = na.exclude)
 modelr::rmse(buildings.forest0, buildings_test)  
@@ -305,12 +297,11 @@ And finally, we used another ensemble method, Boosted trees.
 ```{r 3.4}
 #compare with boosted regression trees
 boost_buildings = gbm(Revenue ~.,
-                      data = buildings_train,
+                      data = buildings_train, distribution = "gaussian",
                       interaction.depth=4, n.trees=500, shrinkage=.05)
 # RMSE of boosted regression trees
 rmse(boost_buildings, buildings_test)
-# we can see its error curve -- 
-gbm.perf(boost_buildings)
+
 ```
 
 &nbsp;
