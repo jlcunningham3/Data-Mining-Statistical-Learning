@@ -106,39 +106,39 @@ and the larger the increase, the bigger the effect on crime.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1 (baseline)</td>
-<td style="text-align: right;">19.81470</td>
+<td style="text-align: right;">24.31399</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">19.85939</td>
+<td style="text-align: right;">24.49769</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">19.84933</td>
+<td style="text-align: right;">24.54582</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">22.76814</td>
+<td style="text-align: right;">26.75693</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree2</td>
-<td style="text-align: right;">22.85653</td>
+<td style="text-align: right;">27.37044</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">18.79479</td>
+<td style="text-align: right;">24.82357</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">22.10252</td>
+<td style="text-align: right;">26.43118</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_boost2</td>
-<td style="text-align: right;">22.83235</td>
+<td style="text-align: right;">29.11797</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost3</td>
-<td style="text-align: right;">22.88528</td>
+<td style="text-align: right;">29.16095</td>
 </tr>
 </tbody>
 </table>
@@ -162,15 +162,15 @@ models, one random forest, and three gradient-boosted models.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">25.82768</td>
+<td style="text-align: right;">23.16345</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">22.56781</td>
+<td style="text-align: right;">20.05019</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">25.05192</td>
+<td style="text-align: right;">22.24238</td>
 </tr>
 </tbody>
 </table>
@@ -280,10 +280,10 @@ selection, and building materials meet certain environmental benchmarks.
 
 To employ the data in our models, we should work on the data and modify
 some features. The “mutate” function is used to create (modify)
-columns: - “Revenue = leasing\_rate \* Rent”. - Through the “across”
-function, we apply “factor” to (renovated, class\_a, class\_b, LEED,
-Energystar, green\_rating, net, amenities), which will convert them to
-factors.
+columns: - “Revenue = leasing\_rate \* Rent / 100”. - Through the
+“across” function, we apply “factor” to (renovated, class\_a, class\_b,
+LEED, Energystar, green\_rating, net, amenities), which will convert
+them to factors.
 
 The “select” function is used to select columns from the data frame. In
 this case, the “-” sign is used to indicate that columns should be
@@ -296,7 +296,7 @@ independent variables.
 ![](Problem-Set-3_files/figure-markdown_strict/3.1-1.png)
 
     ## diffmean 
-    ##  320.519
+    ##  3.20519
 
  
 
@@ -322,7 +322,7 @@ are many irrelevant features in the data. To address this, we use
 ensemble methods such as random forests or gradient boosting, which
 combine the predictions of multiple trees to improve performance.
 
-    ## [1] 1012.857
+    ## [1] 9.537108
 
  
 
@@ -331,29 +331,36 @@ variables, and the second includes some features (City\_Market\_Rent ,
 age, size+ class\_a, class\_b, Electricity\_Costs, green\_rating) that
 seem to be effective on the dependent variable.
 
-    ## [1] 793.5497
+    ## [1] 7.590279
 
-    ## [1] 876.833
+    ## [1] 8.270924
 
 ![](Problem-Set-3_files/figure-markdown_strict/3.3-1.png)
 
  
 
-And finally, we used another ensemble method, Boosted trees.
+And finally, we used another ensemble method, Boosted trees. We apply
+this technique two times; in the first model, all independent variables
+are included; in the second model, we exclude some less related
+features.
 
-    ## [1] 986.8264
+    ## [1] 7.225139
+
+    ## [1] 6.87767
 
  
 
 ## Conclusion
 
 Our measure for comparing the results are their RMSEs. Based on the
-results of the simulations, the random forest model included all
-variable has the lowest out of the sample RMSE. The other random forest
-has the second-best result, which shows proves the better performance of
-the random forest comparing the other decision trees models. So, to
-predict the revenue per square foot per calendar year, we will apply the
-comprehensive random forest model.
+results of the simulations, the boosted tree with selected features has
+the lowest out of the sample RMSE. The other boosted tree has the
+second-best result, which shows the better performance of the boosted
+tree comparing the other decision tree models in this context. Of
+course, the result of both ensemble methods can improve the RMSEs,
+however, for our data, boosted tree works better. So, to predict the
+revenue per square foot per calendar year, we will apply the second
+boosted tree model.
 
 Back to the main question, how much does a green certificate affect
 profitability?
@@ -364,10 +371,6 @@ green certificate. At first, we can check this effect through
 ignore a variable, to human language it means that without any
 information about the status of a green certificate, the error of the
 predictions changes less than the other features.
-
-    ##   green_rating     yhat
-    ## 1            0 2398.287
-    ## 2            1 2433.065
 
 ![](Problem-Set-3_files/figure-markdown_strict/3.5-1.png)
 

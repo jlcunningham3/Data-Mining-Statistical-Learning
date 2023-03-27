@@ -205,7 +205,7 @@ The file greenbuildings.csv contains data on 7,894 commercial rental properties 
 
 To employ the data in our models, we should work on the data and modify some features.
 The "mutate" function is used to create (modify) columns:
--	"Revenue = leasing_rate * Rent ".
+-	"Revenue = leasing_rate * Rent / 100".
 -	Through the "across" function, we apply "factor" to (renovated, class_a, class_b, LEED, Energystar, green_rating, net, amenities), which will convert them to factors.  
 
 The "select" function is used to select columns from the data frame. In this case, the "-" sign is used to indicate that columns should be excluded from the selection. The columns being excluded are "CS_PropertyID", "Rent", and "leasing_rate". Because the first is only the ID of homes, and the others are used in the definition of Revenue. So, we should exclude them from the features we want to use as independent variables.
@@ -218,7 +218,7 @@ The "select" function is used to select columns from the data frame. In this cas
 ##This code uses across() to apply the factor() function to columns specified by name in a vector. 
 ##The resulting data frame has all the specified columns converted to factors.
 greenbuildings <-greenbuildings%>%
-  mutate( Revenue = leasing_rate * Rent,
+  mutate( Revenue = leasing_rate * Rent/100,
           across(c(renovated, class_a, class_b, LEED, Energystar, 
                    green_rating, net, amenities), factor))
 
@@ -292,23 +292,28 @@ varImpPlot(buildings.forest1, type=1)
 
 &nbsp;
 
-And finally, we used another ensemble method, Boosted trees.
+And finally, we used another ensemble method, Boosted trees. We apply this technique two times; in the first model, all independent variables are included; in the second model, we exclude some less related features. 
 
 ```{r 3.4}
 #compare with boosted regression trees
-boost_buildings = gbm(Revenue ~.,
+boost_buildings1 = gbm(Revenue ~.,
                       data = buildings_train, distribution = "gaussian",
-                      interaction.depth=4, n.trees=500, shrinkage=.05)
-# RMSE of boosted regression trees
-rmse(boost_buildings, buildings_test)
+                      interaction.depth=8, n.trees=3000, shrinkage=.1)
 
+boost_buildings2 = gbm(Revenue ~  City_Market_Rent + renovated + class_a + class_b+ amenities + Electricity_Costs + Gas_Costs + size + stories + age  + hd_total07 +total_dd_07 + green_rating,
+                      data = buildings_train, distribution = "gaussian",
+                      interaction.depth=8, n.trees=3000, shrinkage=.1)
+
+# RMSE of boosted regression trees
+rmse(boost_buildings1, buildings_test)
+rmse(boost_buildings2, buildings_test)
 ```
 
 &nbsp;
 
 ## Conclusion
 
-Our measure for comparing the results are their RMSEs. Based on the results of the simulations, the random forest model included all variable has the lowest out of the sample RMSE. The other random forest has the second-best result, which shows proves the better performance of the random forest comparing the other decision trees models. So, to predict the revenue per square foot per calendar year, we will apply the comprehensive random forest model. 
+Our measure for comparing the results are their RMSEs. Based on the results of the simulations, the boosted tree with selected features has the lowest out of the sample RMSE. The other boosted tree has the second-best result, which shows the better performance of the boosted tree comparing the other decision tree models in this context. Of course, the result of both ensemble methods can improve the RMSEs, however, for our data, boosted tree works better. So, to predict the revenue per square foot per calendar year, we will apply the second boosted tree model. 
 
 Back to the main question, how much does a green certificate affect profitability?
 
@@ -318,7 +323,6 @@ Now, we have  reliable tools to see the real (partial) effect of the green certi
 # partial dependence plot
 # isolate the partial effect of specific features
 p1 = pdp::partial(buildings.forest0, pred.var = 'green_rating', n.trees=350)
-p1
 plot(p1, 'green_rating', ylim=c(0, 3000), xlab = "Green Certificate", ylab = "Revenue", main = "Partial dependence plot for green rating and revenue")
 ```
 
