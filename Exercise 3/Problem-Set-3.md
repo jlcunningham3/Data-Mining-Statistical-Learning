@@ -106,39 +106,39 @@ and the larger the increase, the bigger the effect on crime.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm1 (baseline)</td>
-<td style="text-align: right;">32.94523</td>
+<td style="text-align: right;">22.13330</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">lm2</td>
-<td style="text-align: right;">32.82046</td>
+<td style="text-align: right;">22.17757</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lm3</td>
-<td style="text-align: right;">32.88707</td>
+<td style="text-align: right;">22.25359</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">35.76433</td>
+<td style="text-align: right;">28.80949</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree2</td>
-<td style="text-align: right;">35.40182</td>
+<td style="text-align: right;">28.71394</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">35.04556</td>
+<td style="text-align: right;">24.15293</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">35.06154</td>
+<td style="text-align: right;">27.36428</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_boost2</td>
-<td style="text-align: right;">36.69525</td>
+<td style="text-align: right;">26.24023</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost3</td>
-<td style="text-align: right;">36.73497</td>
+<td style="text-align: right;">26.29683</td>
 </tr>
 </tbody>
 </table>
@@ -162,15 +162,15 @@ models, one random forest, and three gradient-boosted models.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">dengue_tree1</td>
-<td style="text-align: right;">29.48444</td>
+<td style="text-align: right;">23.28363</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">dengue_forest1</td>
-<td style="text-align: right;">27.02944</td>
+<td style="text-align: right;">21.72325</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">dengue_boost1</td>
-<td style="text-align: right;">27.38553</td>
+<td style="text-align: right;">23.66164</td>
 </tr>
 </tbody>
 </table>
@@ -226,7 +226,7 @@ facilities.
 
 ![](Problem-Set-3_files/figure-markdown_strict/3.1-1.png)
 
-    ## [1] 928.7499
+    ## [1] 871.8804
 
 <table>
 <caption>RMSE of each model, first pass</caption>
@@ -239,23 +239,23 @@ facilities.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">lm (baseline)</td>
-<td style="text-align: right;">1072.7482</td>
+<td style="text-align: right;">970.7020</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">buildings.tree0</td>
-<td style="text-align: right;">928.7499</td>
+<td style="text-align: right;">871.8804</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">buildings.forest0</td>
-<td style="text-align: right;">745.2212</td>
+<td style="text-align: right;">694.7563</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">buildings.forest1</td>
-<td style="text-align: right;">748.4187</td>
+<td style="text-align: right;">694.5296</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">buildings.forest2</td>
-<td style="text-align: right;">911.5765</td>
+<td style="text-align: right;">845.5001</td>
 </tr>
 </tbody>
 </table>
@@ -270,11 +270,9 @@ Our best model above is a random forest.
 
 Comparing with a boosted regression tree:
 
-    ## Distribution not specified, assuming gaussian ...
-
 ![](Problem-Set-3_files/figure-markdown_strict/3.2-1.png)
 
-    ## [1] 74
+    ## [1] 73
     ## attr(,"smoother")
     ## Call:
     ## loess(formula = object$oobag.improve ~ x, enp.target = min(max(4, 
@@ -282,8 +280,8 @@ Comparing with a boosted regression tree:
     ## 
     ## Number of Observations: 500 
     ## Equivalent Number of Parameters: 39.85 
-    ## Residual Standard Error: 962.8
+    ## Residual Standard Error: 914
 
-    ## [1] 1036.012
+    ## [1] 985.2568
 
 ![](Problem-Set-3_files/figure-markdown_strict/3.2-2.png)![](Problem-Set-3_files/figure-markdown_strict/3.2-3.png)

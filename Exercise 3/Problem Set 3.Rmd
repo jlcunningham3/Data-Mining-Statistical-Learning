@@ -2,7 +2,7 @@
 title: "Problem Set 3"
 author: "Jack Cunningham, Ken Noddings, Ali Fazl"
 date: "2023-03-22"
-output: pdf_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
@@ -237,7 +237,6 @@ RMSE4.1
 # variable importance measures
 # how much does mean-squared error increase when we ignore a variable?
 varImpPlot(buildings.forest1, type=1)
-view(greenbuildings)
 
 # partial dependence plots
 # these are trying to isolate the partial effect of specific features
@@ -260,9 +259,7 @@ Comparing with a boosted regression tree:
 
 ``` {r 3.2}
 # compare with boosted regression trees
-boost_buildings = gbm(Revenue ~ City_Market_Rent + age+ renovated + amenities+class_a+class_b + green_rating + total_dd_07,
-                      data = buildings_train,
-                      interaction.depth=4, n.trees=500, shrinkage=.05)
+boost_buildings = gbm(Revenue ~ City_Market_Rent + age+ renovated + amenities+class_a+class_b + green_rating + total_dd_07, data = buildings_train, distribution='gaussian', interaction.depth=4, n.trees=500, shrinkage=.05)
 
 #  error curve -- 
 gbm.perf(boost_buildings)
@@ -275,9 +272,5 @@ rmse(boost_buildings, buildings_test)
 plot(boost_buildings, 'City_Market_Rent')
 plot(boost_buildings, 'green_rating')
 ```
-
-
-
-
 
 
