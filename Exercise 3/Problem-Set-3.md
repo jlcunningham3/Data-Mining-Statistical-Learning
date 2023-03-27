@@ -380,10 +380,10 @@ Then, we can calculate the partial dependence shows the average response
 of the model to changes in the green certificate variable while holding
 all other predictor variables constant. The result can change based on
 the trained data, but changes between having vs not-having the
-certificate is less than 50$ in revenue per square foot per calendar
+certificate is less than $0.50 in revenue per square foot per calendar
 year!
 
 The result is interesting because at first look, comparing the mean of
-two categories (having vs not-having the certificate) indicates 300$
+two categories (having vs not-having the certificate) indicates $3.00
 revenue per square foot per calendar year; which can be misleading
 compared to the real effect that the random forest model gives us!
