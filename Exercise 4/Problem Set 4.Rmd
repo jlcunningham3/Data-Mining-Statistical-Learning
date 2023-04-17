@@ -1,0 +1,377 @@
+---
+title: "Problem Set 4"
+author: "Jack Cunningham, Ken Noddings, & Ali Fazl"
+date: "`r Sys.Date()`"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(cluster)
+library(factoextra)
+library(tidyverse)
+library(gridExtra)
+library(FactoMineR)
+library(ClusterR)
+library(cluster)
+library(foreach)
+library(mosaic)
+library(dendextend)
+wine_data <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/wine.csv")
+social_marketing <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/social_marketing.csv")
+groceriesRaw <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/groceries.txt")
+```
+
+## Question 1: Clustering & PCA
+
+*Run both PCA and a clustering algorithm of your choice on the 11 chemical properties (or suitable transformations thereof) and summarize your results. Which dimensionality reduction technique makes more sense to you for this data? Convince yourself (and me) that your chosen method is easily capable of distinguishing the reds from the whites, using only the "unsupervised" information contained in the data on chemical properties. Does your unsupervised technique also seem capable of distinguishing the higher from the lower quality wines?*
+
+```{r 1.1}
+## Red vs. White
+
+# Scale the chemical properties
+scaled_chemical_properties <- scale(wine_data[1:11])
+
+## PCA
+# Perform PCA
+pca_result <- prcomp(scaled_chemical_properties, scale=TRUE, rank=11)
+summary(pca_result)
+
+## Clustering
+# Run k-means clustering with the optimal number of clusters
+set.seed(123) # for reproducibility
+k_clusters <- 2 
+kmeans_result <- kmeans(scaled_chemical_properties, centers = k_clusters)
+
+# Visualize clustering results
+wine_data$cluster <- factor(kmeans_result$cluster)
+
+## Comparison
+# First, create a PCA plot and store it
+pca_plot <- fviz_pca_ind(pca_result,
+                         geom.ind = "point",
+                         col.ind = wine_data$color, # color points by wine type
+                         palette = "jco",
+                         addEllipses = TRUE) +
+  ggtitle("PCA Plot") +
+  theme_minimal()
+
+# Then, create a clustering plot and store it
+clustering_plot <- fviz_cluster(kmeans_result, data = scaled_chemical_properties, geom = "point",
+                                ellipse.type = "convex", palette = "jco", ggtheme = theme_minimal()) +
+  ggtitle("K-means Clustering Plot")
+
+# Finally, combine the plots using the gridExtra package
+grid.arrange(pca_plot, clustering_plot, ncol = 2)
+```
+
+Eyeballing these plots, both PCA and Clustering seem to do a pretty good job of distinguishing the red wines from the whites, using only the "unsupervised" information contained in the data on chemical properties. PCA appears to perform better than clustering, since the area of overlap is smaller.
+
+In this case, PCA appears to be the more suitable dimensionality reduction technique for the given data. The primary reason is that PCA aims to capture the most significant variations in the data by transforming the original variables into a new set of uncorrelated variables (principal components). This helps in simplifying the dataset while retaining most of the information.
+
+Using PCA as the dimensionality reduction technique helps reveal the underlying structure in the data more effectively, providing better separation between groups (especially wine color) and making it easier to analyze the relationships between the chemical properties of the wines and their characteristics.
+
+&nbsp;
+
+```{r 1.2}
+## Evaluation of models: Silhouette scoring
+# PCA
+# Perform PCA using prcomp() function
+pca_result_alt <- prcomp(scaled_chemical_properties)
+
+# Get the reduced data (scores) for the first two principal components
+reduced_data <- pca_result_alt$x[, 1:2]
+
+# Run k-means clustering on reduced data
+set.seed(123) # for reproducibility
+kmeans_result_pca <- kmeans(reduced_data, centers = k_clusters)
+
+# Calculate silhouette score for PCA
+silhouette_scores_pca <- silhouette(kmeans_result_pca$cluster, dist(reduced_data))
+
+# Calculate silhouette score for k-means clustering
+silhouette_scores <- silhouette(kmeans_result$cluster, dist(scaled_chemical_properties))
+
+# Calculate average silhouette scores
+silhouette_score_kmeans <- mean(silhouette_scores[, 3])
+silhouette_score_pca <- mean(silhouette_scores_pca[, 3])
+
+# Create a data frame with the silhouette scores
+silhouette_scores_df <- data.frame(Method = c("K-means Clustering", "PCA"),
+                                   Silhouette_Score = c(silhouette_score_kmeans, silhouette_score_pca))
+
+# Create a kable with the silhouette scores
+kable(silhouette_scores_df, caption = "Average Silhouette Scores")
+```
+
+A silhouette score is a metric used to evaluate the quality of clustering results by measuring the similarity of data points within their assigned clusters compared to their dissimilarity with data points in other clusters. The score ranges from -1 to 1, with higher values indicating better-defined and well-separated clusters.
+
+The silhouette scores indicate that PCA provides better separation between the groups (wine color or quality) than k-means clustering. The PCA method has a higher silhouette score of 0.346 compared to the k-means clustering method with a score of 0.162. This confirms our intuition that reducing the dimensionality of the dataset using PCA captures the underlying structure of the data more effectively.
+
+&nbsp;
+
+```{r 1.3}
+## Low vs. High Quality
+# Create a new variable for wine quality category
+wine_data$quality_category <- ifelse(wine_data$quality <= 5, "low", "high")
+
+## PCA
+# PCA plot colored by wine quality
+pca_quality_plot <- fviz_pca_ind(pca_result,
+                                 geom.ind = "point",
+                                 col.ind = wine_data$quality_category, # color points by wine quality
+                                 palette = "jco",
+                                 addEllipses = TRUE) +
+  ggtitle("PCA Plot - Quality") +
+  theme_minimal()
+
+## Clustering
+# K-means clustering plot colored by wine quality
+clustering_quality_plot <- fviz_cluster(kmeans_result, data = scaled_chemical_properties, geom = "point",
+                                        ellipse.type = "convex", palette = "jco", ggtheme = theme_minimal(),
+                                        stand = FALSE, # disable standardization for manual coloring
+                                        axes = c(1, 2)) + # specify the axes you want to plot
+  geom_point(aes(color = wine_data$quality_category)) + # color points by wine quality
+  scale_color_manual(values = c("low" = "red", "high" = "green")) +
+  labs(color = "Wine Quality") +
+  ggtitle("K-means Clustering Plot - Quality")
+
+
+# Combine the plots using the gridExtra package
+grid.arrange(pca_quality_plot, clustering_quality_plot, ncol = 2)
+```
+
+Eyeballing the plots for both PCA and k-means clustering, it appears that neither method is able to effectively distinguish between high-quality and low-quality wines using only the chemical properties. This result suggests that the chemical properties of the wines may not have a strong linear relationship with the wine quality, or that the quality ratings are influenced by additional factors beyond the chemical composition. It is also possible that the perceived quality of wines is a more complex and subjective attribute, which may not be adequately captured by PCA or clustering methods.
+
+&nbsp;
+
+## Question 2: Market segmentation
+
+*Consider the data in social_marketing.csv. This was data collected in the course of a market-research study using followers of the Twitter account of a large consumer drinks brand that shall remain nameless---let's call it "NutrientH20" just to have a label. The goal here was for NutrientH20 to understand its social-media audience a little bit better, so that it could hone its messaging a little more sharply.*
+
+*...*
+
+*Your task to is analyze this data as you see fit, and to prepare a (short!) report for NutrientH20 that identifies any interesting market segments that appear to stand out in their social-media audience. You have complete freedom in deciding how to pre-process the data and how to define "market segment." (Is it a group of correlated interests? A cluster? A principal component? Etc. You decide the answer to this question---don't ask me!) Just use the data to come up with some interesting, well-supported insights about the audience and give your client some insight as to how they might position their brand to maximally appeal to each market segment.*
+
+```{r 2}
+# extract the values in the first column as row names
+rownames(social_marketing) <- social_marketing$X
+
+# remove the first column from the data frame, set the id as the labels of the rows
+social_marketing <- social_marketing[, -1]
+
+# remove unrelated / without useful information
+social_marketing <- social_marketing[, -c(1,5,35,36) ]
+
+#frequency of each word for an individual
+frequency = social_marketing/rowSums(social_marketing)
+
+#scaling
+frequency = scale(frequency, center=TRUE, scale=TRUE)
+
+
+#clustring
+#as we know that "elbow plot" is not helpful to find a suggestion for k, I directly tried Gap statistic
+# since running this code takes long time, I put the code here, but I do not run again.
+
+#gap=clusGap(x = frequency, FUNcluster = kmeans, K.max = 10, B = 30, nstart = 25)
+#plot(gap, main = "Gap statistic plot")
+
+#unfortunately, the plot doesnt have any local maximum!
+
+
+#we begin with k=8 (but we will revise it)
+
+
+
+#first I compare the performane of different types of hierarchical clustering: single, average, complete, ward.D2
+
+distances = dist(frequency, method = "euclidean")
+#hierarchical clustering 
+#single
+hcluster_single = hclust(distances, method = 'single')
+cluster_s = cutree(hcluster_single, k=8)
+summary(factor(cluster_s))
+#unbalanced size per clusters
+
+#average
+hcluster_average = hclust(distances, method = 'average')
+cluster_a = cutree(hcluster_average, k=8)
+summary(factor(cluster_a))
+#unbalanced size per clusters
+
+
+#complete
+hcluster_comp = hclust(distances, method = 'complete')
+cluster_c = cutree(hcluster_comp, k=8)
+summary(factor(cluster_c))
+#slightly better, but again unbalanced size per clusters
+
+#ward
+hcluster_ward = hclust(distances, method = 'ward.D2')
+cluster_w = cutree(hcluster_ward, k=8)
+summary(factor(cluster_w))
+#it seems for this data set, "ward" method can result to balanced (size) groups.
+
+
+
+#although different methods apply different approaches for categorizing, I use "ward" to find "only" an intuition about different possible number of categories
+
+# Ward's linkage method with different k values
+hcluster_ward = hclust(distances, method = 'ward.D2')
+for (k in 4:10) {
+  cluster_w = cutree(hcluster_ward, k=k)
+  cat("k =", k, "\n")
+  print(summary(factor(cluster_w)))
+}
+#based on what I see for size of members of the groups for different k,  with k=6, I feel it makes a relative balanced members per group (I prefer less categories). 
+
+
+#now, we can continue with k++ method, given k=6
+clust_k = KMeans_rcpp(frequency, clusters=6, num_init=100)
+
+# Calculate the mean value of each column in frequency for each cluster assignment in clust_k
+clust_mean = aggregate(frequency, by=list(cluster=clust_k$cluster), mean)
+print(clust_mean)
+# Convert the resulting means to a data frame
+results1 = as.data.frame(clust_mean)
+
+# transpose
+t_results1 <- t(results1)
+
+
+# get row and colnames in order
+colnames(t_results1) <- rownames(results1)
+rownames(t_results1) <- colnames(results1)
+
+# Removing cluster names
+t_results2 = t_results1[-1,]
+
+# Extract column names with the maximum value for each row in t_results2
+number_k = colnames(t_results2)[apply(t_results2,1,which.max)]
+# Combine row names and number_k into a matrix
+clus_features = cbind(rownames(t_results2),number_k)
+
+for (k in 1:6) {
+  # Subset t_results2 based on number_k
+  subset_results = t_results2[number_k == k, ]
+  
+  # Print the resulting subset to the console
+  cat("Cluster", k, ":\n")
+  print(subset_results)
+}
+
+
+# Now we can check with correlation 
+cor(frequency)
+ggcorrplot::ggcorrplot(cor(frequency), hc.order = TRUE)
+
+#the result of our model is very close to what we see in this plot :)
+```
+
+### Introduction
+
+Market Segmentation has always been the first step in any product launch, campaign, or personalized recommendation, which needs reliable data. The data in social_marketing.csv was collected in the course of a market-research study using followers of the Twitter account of a large consumer brand -call it “NutrientH20”. The goal here was for NutrientH20 to understand its social-media audience a little bit better so that it could hone its messaging a little more sharply.
+
+### Data
+
+Background:
+The advertising firm that runs NutrientH20's online-advertising campaigns took a sample of the brand's Twitter followers. They collected every Twitter post ("tweet") by each of those followers over a seven-day period in June 2014. Every post was examined by a human annotator contracted through Amazon's Mechanical Turk service.
+
+Each tweet was categorized based on its content using a pre-specified scheme of 36 different categories, each representing a broad area of interest (e.g. politics, sports, family, etc.) Annotators were allowed to classify a post as belonging to more than one category.
+
+Cleaning: 
+This data includes 36 tweet categories for 7882 users, where each cell represents how many times each user has posted a tweet that can be tagged to that category. But there are some categories in which their content doesn’t include useful information, which are: "chatter", "uncategorized", "spam" (i.e. unsolicited advertising), and "adult" (posts that are pornographic or otherwise explicit). So, we should remove these categories from our data.
+
+Like any problem where the columns are similar items with values as the frequency of occurrence (typical text analytics base data), we should calculate the term frequencies as % of tweets tagged to a category per user. This normalizes for the difference in the number of tweets per user, giving us an intuition of the weightage of a category in the tweet profile for the user. Of course, since the first row in the data set is a random id for each user, to have only frequencies of categories for normalizing, we define the id as the labels of each row. And finally, we modified the data based on “canter” and “scale”.
+
+### Modeling
+
+For finding the segments, we use the clustering method. Clustering will help us put our individual customers in separate groups based on similarities in their tweeting patterns. To begin, we tried to find an ideal number of clusters. As we know that the "elbow plot" is not helpful to find a suggestion for k, we tried Gap statistic for k<=10, however, this plot doesn’t have any local maximum in this interval. So, we (randomly) begin with k=8, but I will revise it.
+
+I compare the performance of different types of hierarchical clustering: single, average, complete, ward.D2 ('ward.D2' is a variant of Ward's linkage method used in hierarchical clustering. In Ward's linkage method, at each step of the clustering process, the two clusters that minimize the increase in the sum of squared distances within the merged cluster are merged. In the 'ward.D2' variant, the increase in variance is used instead of the sum of squared distances to determine the optimal merge. This can be more computationally efficient than the original Ward's method when dealing with large datasets. The result of clustering is also more robust to outliers.)
+
+The results of clustering through the three common methods (single, average, complete) do not yield acceptable clusters, because as you can see in the outputs, the number of members of each cluster in these methods is unbalanced. But the 'ward.D2' method gives more balanced categories, so, we use this method.
+
+Although different methods apply different approaches for clustering, we use "ward" to find "only" an intuition about the different possible number of clusters (k). We tried k=4:10 (and you can see the results), based on what we see for the size of clusters for different k,  with k=6, we feel it makes relatively balanced members per group (we prefer to have fewer categories, so 6 is the min acceptable number).
+
+To apply our idea for the clustering in this question, we prefer using KNN++ . Based on the result of the previous part, we apply k=6 as the number of clusters. Then, for each cluster, we calculate the average frequency for each word. In order to cluster categories, we transpose the result, so now we can see for each cluster (row), what is the average frequency of each category. To find categories to clusters, our idea is to attribute the maximum value for each row as its cluster. For example, for “current_events”, the number of the 4th row is the highest, so we attribute it to cluster #4. Based on this method, the members of clusters are:
+
+Cluster 1: travel,  politics, news, computers, automotive
+Cluster 2: online_gaming, college_uni, sports_playing, 
+Cluster 3: sports_fandom, food, family, religion, parenting, school
+Cluster 4: current_events, photo_sharing, tv_film, home_and_garden, music, shopping, eco, business, crafts, art, dating, small_business
+Cluster 5: cooking, beauty, fashion
+Cluster 6: health_nutrition, outdoors, personal_fitness
+
+To see the performance of this clustering, we can see the correlation between categories. 
+
+```{r 2.1,out.width = "500px"}
+knitr::include_graphics("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/clusters.png")
+```
+
+We can check our clusters with this plot:
+Cluster 1 is the combination of two squares on the graph, the interesting point is that these two squares have a relatively high correlation with each other based on the plot!
+Cluster 2 exactly matches the square at the center of the plot, both include three categories!
+Cluster 3 exactly matches the biggest square on the diagonal, both include six categories!
+Cluster 4 is the biggest cluster, and it includes all of the separated categories which are on the bottom of the plot!
+Cluster 5 exactly matches the fourth square on the plot, both include three categories!
+Cluster 6 exactly matches the third square on the plot, both include three categories!
+
+### Conclusion
+
+As we see, the performance of our clustering method is great! So, we can confirm these clusters, and make any marketing plan based on these clusters. Each of these clusters has a common feature that can be addressed for the marketing plan, however, we think there is not a high correlation within cluster 4 members, so they can ignore this cluster. On the other hand, regarding limitation, they maybe decide to focus on one group/cluster. If we want to prioritize the clusters, cluster 3 is the first suggestion, since it includes more related categories, so it can target relatively a big portion of the customers, which they tweeted about “sports_fandom”, “food”, “family”, “religion”, “parenting”, “school”. All of these categories could be known as being more family-oriented in nature, and NutrientH20 could benefit through an increase in sales if it marketed itself as a family-oriented company.
+
+If they want to work on the other groups, we can give them a clue about each cluster feature, and they can work on the interesting issues for this kind of customer: 
+Cluster 1 includes people who are interested in traveling and being aware of their environment!
+If they want to work on cluster 2, they should target college students.
+We mentioned cluster 3 as the main group, and cluster 4 as a cluster with miscellaneous categories. 
+If they want to work on cluster 5, women can be their main target.
+If they want to work on cluster 6, they should target people who care about their health, and advertise the effects of their product on people’s health.
+
+&nbsp;
+
+## Question 3: Association rules for grocery purchases
+
+*Revisit the notes on association rule mining and the R example on music playlists: playlists.R and playlists.csv. Then use the data on grocery purchases in groceries.txt and find some interesting association rules for these shopping baskets. The data file is a list of shopping baskets: one person's basket for each row, with multiple items per row separated by commas -- you'll have to cobble together a few utilities for processing this into the format expected by the "arules" package. Pick your own thresholds for lift and confidence; just be clear what these thresholds are and how you picked them. Do your discovered item sets make sense? Present your discoveries in an interesting and concise way.*
+
+```{r 3}
+library(arules)
+library(arulesViz)
+
+#convert raw data into list of lists
+groceries <- apply(groceriesRaw, 1, function(x) as.vector(as.character(x[x != ""])))
+rm(groceriesRaw)
+
+## Cast this variable as a special arules "transactions" class.
+grocTrans = as(groceries, "transactions")
+summary(grocTrans)
+
+
+grocRules = apriori(grocTrans, 
+                     parameter=list(support=.005, confidence=.19, maxlen=5))
+# Look at the output... so many rules!
+inspect(grocRules)
+
+inspect(subset(grocRules, subset=lift > 3 & confidence > 0.19))
+
+grocRules_graph = associations2igraph(subset(grocRules, lift>3), associationsAsNodes = FALSE)
+igraph::write_graph(grocRules_graph, file='groceries.graphml', format = "graphml")
+```
+
+For our confidence threshold we chose 0.19. This is just slightly below the confidence measure for the rule we found between ham and white bread, which we believe to be a good baseline for the idea of association rules in grocery store baskets. For lift, we chose three, which left us with 66 rules when combined with the confidence threshold. We chose this relatively high value for lift because we believe that the interesting information here lies in the predictive power of seeing a given item in a basket. Lower thresholds for lift started to clutter the data with rules which we believe were not very interesting.
+
+```{r 3.1, out.width = "500px"}
+knitr::include_graphics("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/association_map.jpeg")
+```
+ 
+Here we can see the remaining rules, with connections colored by the starting node (for example, in the rule between ham and white bread in the bottom left, the blue coloring denotes that the expected value of having white bread in a basket is higher given that we already know there is ham in the basket). These directional relationships are not particularly important because the relative associations are the same, but they do shed some light on which item in a pairing is more common.
+
+We can see some reasonable rules here (berries and whipped cream, white bread and ham, sausage and sliced cheese), which leads us to believe that the association metrics were well chosen. One of the more interesting rules on the list is the apparent connection between shopping bags and sausage. Our tentative theory to explain this is that it may capture people going out on a picnic or other more active outing where sausage is a common snack and bags are needed.
+
+We were slightly disappointed with the structure of the given data having some items that I do not believe are very similar lumped together. “whipped/sour cream” is a good example of this. Despite their names, we don’t think anyone would be happy to interchange their whipped cream with sour cream instead, and we believe that this ultimately muddles the association rules we derived for those items.
+

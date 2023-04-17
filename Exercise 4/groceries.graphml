@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_label" for="node" attr.name="label" attr.type="string"/>
+  <key id="v_index" for="node" attr.name="index" attr.type="double"/>
+  <key id="e_index" for="edge" attr.name="index" attr.type="double"/>
+  <key id="e_support" for="edge" attr.name="support" attr.type="double"/>
+  <key id="e_confidence" for="edge" attr.name="confidence" attr.type="double"/>
+  <key id="e_coverage" for="edge" attr.name="coverage" attr.type="double"/>
+  <key id="e_lift" for="edge" attr.name="lift" attr.type="double"/>
+  <key id="e_count" for="edge" attr.name="count" attr.type="double"/>
+  <graph id="G" edgedefault="directed">
+    <node id="n0">
+      <data key="v_name">8</data>
+      <data key="v_label">beef</data>
+      <data key="v_index">8</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">30</data>
+      <data key="v_label">citrus fruit</data>
+      <data key="v_index">30</data>
+    </node>
+    <node id="n2">
+      <data key="v_name">100</data>
+      <data key="v_label">onions</data>
+      <data key="v_index">100</data>
+    </node>
+    <node id="n3">
+      <data key="v_name">103</data>
+      <data key="v_label">other vegetables</data>
+      <data key="v_index">103</data>
+    </node>
+    <node id="n4">
+      <data key="v_name">110</data>
+      <data key="v_label">pip fruit</data>
+      <data key="v_index">110</data>
+    </node>
+    <node id="n5">
+      <data key="v_name">124</data>
+      <data key="v_label">root vegetables</data>
+      <data key="v_index">124</data>
+    </node>
+    <node id="n6">
+      <data key="v_name">158</data>
+      <data key="v_label">tropical fruit</data>
+      <data key="v_index">158</data>
+    </node>
+    <edge source="n2" target="n5">
+      <data key="e_index">1</data>
+      <data key="e_support">0.00529584831644328</data>
+      <data key="e_confidence">0.265573770491803</data>
+      <data key="e_coverage">0.0199411572409284</data>
+      <data key="e_lift">3.78913322730609</data>
+      <data key="e_count">81</data>
+    </edge>
+    <edge source="n2" target="n3">
+      <data key="e_index">2</data>
+      <data key="e_support">0.00745341614906832</data>
+      <data key="e_confidence">0.373770491803279</data>
+      <data key="e_coverage">0.0199411572409284</data>
+      <data key="e_lift">3.004109128813</data>
+      <data key="e_count">114</data>
+    </edge>
+    <edge source="n0" target="n5">
+      <data key="e_index">3</data>
+      <data key="e_support">0.00869565217391304</data>
+      <data key="e_confidence">0.257751937984496</data>
+      <data key="e_coverage">0.0337365152010461</data>
+      <data key="e_lift">3.67753348085156</data>
+      <data key="e_count">133</data>
+    </edge>
+    <edge source="n4" target="n6">
+      <data key="e_index">4</data>
+      <data key="e_support">0.0126838836220987</data>
+      <data key="e_confidence">0.260752688172043</data>
+      <data key="e_coverage">0.0486433474991827</data>
+      <data key="e_lift">3.86454686588314</data>
+      <data key="e_count">194</data>
+    </edge>
+    <edge source="n1" target="n6">
+      <data key="e_index">5</data>
+      <data key="e_support">0.0124877410918601</data>
+      <data key="e_confidence">0.234932349323493</data>
+      <data key="e_coverage">0.0531546256946715</data>
+      <data key="e_lift">3.48187042916941</data>
+      <data key="e_count">191</data>
+    </edge>
+  </graph>
+</graphml>
