@@ -9,16 +9,6 @@ the “unsupervised” information contained in the data on chemical
 properties. Does your unsupervised technique also seem capable of
 distinguishing the higher from the lower quality wines?*
 
-    ## Red vs. White
-
-    # Scale the chemical properties
-    scaled_chemical_properties <- scale(wine_data[1:11])
-
-    ## PCA
-    # Perform PCA
-    pca_result <- prcomp(scaled_chemical_properties, scale=TRUE, rank=11)
-    summary(pca_result)
-
     ## Importance of components:
     ##                           PC1    PC2    PC3     PC4     PC5     PC6     PC7
     ## Standard deviation     1.7407 1.5792 1.2475 0.98517 0.84845 0.77930 0.72330
@@ -28,33 +18,6 @@ distinguishing the higher from the lower quality wines?*
     ## Standard deviation     0.70817 0.58054 0.4772 0.18119
     ## Proportion of Variance 0.04559 0.03064 0.0207 0.00298
     ## Cumulative Proportion  0.94568 0.97632 0.9970 1.00000
-
-    ## Clustering
-    # Run k-means clustering with the optimal number of clusters
-    set.seed(123) # for reproducibility
-    k_clusters <- 2 
-    kmeans_result <- kmeans(scaled_chemical_properties, centers = k_clusters)
-
-    # Visualize clustering results
-    wine_data$cluster <- factor(kmeans_result$cluster)
-
-    ## Comparison
-    # First, create a PCA plot and store it
-    pca_plot <- fviz_pca_ind(pca_result,
-                             geom.ind = "point",
-                             col.ind = wine_data$color, # color points by wine type
-                             palette = "jco",
-                             addEllipses = TRUE) +
-      ggtitle("PCA Plot") +
-      theme_minimal()
-
-    # Then, create a clustering plot and store it
-    clustering_plot <- fviz_cluster(kmeans_result, data = scaled_chemical_properties, geom = "point",
-                                    ellipse.type = "convex", palette = "jco", ggtheme = theme_minimal()) +
-      ggtitle("K-means Clustering Plot")
-
-    # Finally, combine the plots using the gridExtra package
-    grid.arrange(pca_plot, clustering_plot, ncol = 2)
 
 ![](Problem-Set-4_files/figure-markdown_strict/1.1-1.png)
 
@@ -78,35 +41,6 @@ to analyze the relationships between the chemical properties of the
 wines and their characteristics.
 
  
-
-    ## Evaluation of models: Silhouette scoring
-    # PCA
-    # Perform PCA using prcomp() function
-    pca_result_alt <- prcomp(scaled_chemical_properties)
-
-    # Get the reduced data (scores) for the first two principal components
-    reduced_data <- pca_result_alt$x[, 1:2]
-
-    # Run k-means clustering on reduced data
-    set.seed(123) # for reproducibility
-    kmeans_result_pca <- kmeans(reduced_data, centers = k_clusters)
-
-    # Calculate silhouette score for PCA
-    silhouette_scores_pca <- silhouette(kmeans_result_pca$cluster, dist(reduced_data))
-
-    # Calculate silhouette score for k-means clustering
-    silhouette_scores <- silhouette(kmeans_result$cluster, dist(scaled_chemical_properties))
-
-    # Calculate average silhouette scores
-    silhouette_score_kmeans <- mean(silhouette_scores[, 3])
-    silhouette_score_pca <- mean(silhouette_scores_pca[, 3])
-
-    # Create a data frame with the silhouette scores
-    silhouette_scores_df <- data.frame(Method = c("K-means Clustering", "PCA"),
-                                       Silhouette_Score = c(silhouette_score_kmeans, silhouette_score_pca))
-
-    # Create a kable with the silhouette scores
-    kable(silhouette_scores_df, caption = "Average Silhouette Scores")
 
 <table>
 <caption>Average Silhouette Scores</caption>
@@ -145,36 +79,8 @@ captures the underlying structure of the data more effectively.
 
  
 
-    ## Low vs. High Quality
-    # Create a new variable for wine quality category
-    wine_data$quality_category <- ifelse(wine_data$quality <= 5, "low", "high")
-
-    ## PCA
-    # PCA plot colored by wine quality
-    pca_quality_plot <- fviz_pca_ind(pca_result,
-                                     geom.ind = "point",
-                                     col.ind = wine_data$quality_category, # color points by wine quality
-                                     palette = "jco",
-                                     addEllipses = TRUE) +
-      ggtitle("PCA Plot - Quality") +
-      theme_minimal()
-
-    ## Clustering
-    # K-means clustering plot colored by wine quality
-    clustering_quality_plot <- fviz_cluster(kmeans_result, data = scaled_chemical_properties, geom = "point",
-                                            ellipse.type = "convex", palette = "jco", ggtheme = theme_minimal(),
-                                            stand = FALSE, # disable standardization for manual coloring
-                                            axes = c(1, 2)) + # specify the axes you want to plot
-      geom_point(aes(color = wine_data$quality_category)) + # color points by wine quality
-      scale_color_manual(values = c("low" = "red", "high" = "green")) +
-      labs(color = "Wine Quality") +
-      ggtitle("K-means Clustering Plot - Quality")
-
     ## Scale for colour is already present.
     ## Adding another scale for colour, which will replace the existing scale.
-
-    # Combine the plots using the gridExtra package
-    grid.arrange(pca_quality_plot, clustering_quality_plot, ncol = 2)
 
 ![](Problem-Set-4_files/figure-markdown_strict/1.3-1.png)
 
@@ -212,92 +118,17 @@ interesting, well-supported insights about the audience and give your
 client some insight as to how they might position their brand to
 maximally appeal to each market segment.*
 
-    # extract the values in the first column as row names
-    rownames(social_marketing) <- social_marketing$X
-
-    # remove the first column from the data frame, set the id as the labels of the rows
-    social_marketing <- social_marketing[, -1]
-
-    # remove unrelated / without useful information
-    social_marketing <- social_marketing[, -c(1,5,35,36) ]
-
-    #frequency of each word for an individual
-    frequency = social_marketing/rowSums(social_marketing)
-
-    #scaling
-    frequency = scale(frequency, center=TRUE, scale=TRUE)
-
-
-    #clustring
-    #as we know that "elbow plot" is not helpful to find a suggestion for k, I directly tried Gap statistic
-    # since running this code takes long time, I put the code here, but I do not run again.
-
-    #gap=clusGap(x = frequency, FUNcluster = kmeans, K.max = 10, B = 30, nstart = 25)
-    #plot(gap, main = "Gap statistic plot")
-
-    #unfortunately, the plot doesnt have any local maximum!
-
-
-    #we begin with k=8 (but we will revise it)
-
-
-
-    #first I compare the performane of different types of hierarchical clustering: single, average, complete, ward.D2
-
-    distances = dist(frequency, method = "euclidean")
-    #hierarchical clustering 
-    #single
-    hcluster_single = hclust(distances, method = 'single')
-    cluster_s = cutree(hcluster_single, k=8)
-    summary(factor(cluster_s))
-
     ##    1    2    3    4    5    6    7    8 
     ## 7875    1    1    1    1    1    1    1
-
-    #unbalanced size per clusters
-
-    #average
-    hcluster_average = hclust(distances, method = 'average')
-    cluster_a = cutree(hcluster_average, k=8)
-    summary(factor(cluster_a))
 
     ##    1    2    3    4    5    6    7    8 
     ## 7868    1    3    5    1    1    2    1
 
-    #unbalanced size per clusters
-
-
-    #complete
-    hcluster_comp = hclust(distances, method = 'complete')
-    cluster_c = cutree(hcluster_comp, k=8)
-    summary(factor(cluster_c))
-
     ##    1    2    3    4    5    6    7    8 
     ## 7637   84  129   14    2    5    9    2
 
-    #slightly better, but again unbalanced size per clusters
-
-    #ward
-    hcluster_ward = hclust(distances, method = 'ward.D2')
-    cluster_w = cutree(hcluster_ward, k=8)
-    summary(factor(cluster_w))
-
     ##    1    2    3    4    5    6    7    8 
     ## 1091 1236  356 2380 1030  850  636  303
-
-    #it seems for this data set, "ward" method can result to balanced (size) groups.
-
-
-
-    #although different methods apply different approaches for categorizing, I use "ward" to find "only" an intuition about different possible number of categories
-
-    # Ward's linkage method with different k values
-    hcluster_ward = hclust(distances, method = 'ward.D2')
-    for (k in 4:10) {
-      cluster_w = cutree(hcluster_ward, k=k)
-      cat("k =", k, "\n")
-      print(summary(factor(cluster_w)))
-    }
 
     ## k = 4 
     ##    1    2    3    4 
@@ -320,16 +151,6 @@ maximally appeal to each market segment.*
     ## k = 10 
     ##    1    2    3    4    5    6    7    8    9   10 
     ## 1091 1236  356 1794  531  850  586  636  303  499
-
-    #based on what I see for size of members of the groups for different k,  with k=6, I feel it makes a relative balanced members per group (I prefer less categories). 
-
-
-    #now, we can continue with k++ method, given k=6
-    clust_k = KMeans_rcpp(frequency, clusters=6, num_init=100)
-
-    # Calculate the mean value of each column in frequency for each cluster assignment in clust_k
-    clust_mean = aggregate(frequency, by=list(cluster=clust_k$cluster), mean)
-    print(clust_mean)
 
     ##   cluster current_events      travel photo_sharing     tv_film sports_fandom
     ## 1       1     -0.1477763  0.84177187    -0.4513891 -0.14114039    0.07530597
@@ -373,34 +194,6 @@ maximally appeal to each market segment.*
     ## 4 -0.0471281       -0.3467862 -0.1753215     0.24146409
     ## 5 -0.0804560       -0.3223546  1.9042859    -0.08685353
     ## 6 -0.2895287        1.5523003 -0.2788277    -0.18114478
-
-    # Convert the resulting means to a data frame
-    results1 = as.data.frame(clust_mean)
-
-    # transpose
-    t_results1 <- t(results1)
-
-
-    # get row and colnames in order
-    colnames(t_results1) <- rownames(results1)
-    rownames(t_results1) <- colnames(results1)
-
-    # Removing cluster names
-    t_results2 = t_results1[-1,]
-
-    # Extract column names with the maximum value for each row in t_results2
-    number_k = colnames(t_results2)[apply(t_results2,1,which.max)]
-    # Combine row names and number_k into a matrix
-    clus_features = cbind(rownames(t_results2),number_k)
-
-    for (k in 1:6) {
-      # Subset t_results2 based on number_k
-      subset_results = t_results2[number_k == k, ]
-      
-      # Print the resulting subset to the console
-      cat("Cluster", k, ":\n")
-      print(subset_results)
-    }
 
     ## Cluster 1 :
     ##                    1          2          3           4          5          6
@@ -474,9 +267,6 @@ maximally appeal to each market segment.*
     ## health_nutrition 1.702297
     ## outdoors         0.976199
     ## personal_fitness 1.552300
-
-    # Now we can check with correlation 
-    cor(frequency)
 
     ##                  current_events       travel photo_sharing     tv_film
     ## current_events      1.000000000  0.028468064    0.06423939  0.05136097
@@ -743,11 +533,7 @@ maximally appeal to each market segment.*
     ## fashion           0.02058797     -0.109516109  1.000000000  -0.0218318320
     ## small_business   -0.01841405     -0.079773517 -0.021831832   1.0000000000
 
-    ggcorrplot::ggcorrplot(cor(frequency), hc.order = TRUE)
-
 ![](Problem-Set-4_files/figure-markdown_strict/2-1.png)
-
-    #the result of our model is very close to what we see in this plot :)
 
 ### Introduction
 
@@ -847,8 +633,6 @@ personal\_fitness
 To see the performance of this clustering, we can see the correlation
 between categories.
 
-    knitr::include_graphics("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/clusters.png")
-
 <img src="clusters.png" width="500px" />
 
 We can check our clusters with this plot: Cluster 1 is the combination
@@ -904,8 +688,6 @@ your own thresholds for lift and confidence; just be clear what these
 thresholds are and how you picked them. Do your discovered item sets
 make sense? Present your discoveries in an interesting and concise way.*
 
-    library(arules)
-
     ## 
     ## Attaching package: 'arules'
 
@@ -920,16 +702,6 @@ make sense? Present your discoveries in an interesting and concise way.*
     ## The following objects are masked from 'package:base':
     ## 
     ##     abbreviate, write
-
-    library(arulesViz)
-
-    #convert raw data into list of lists
-    groceries <- apply(groceriesRaw, 1, function(x) as.vector(as.character(x[x != ""])))
-    rm(groceriesRaw)
-
-    ## Cast this variable as a special arules "transactions" class.
-    grocTrans = as(groceries, "transactions")
-    summary(grocTrans)
 
     ## transactions as itemMatrix in sparse format with
     ##  15295 rows (elements/itemsets/transactions) and
@@ -955,9 +727,6 @@ make sense? Present your discoveries in an interesting and concise way.*
     ## 2 artif. sweetener
     ## 3   baby cosmetics
 
-    grocRules = apriori(grocTrans, 
-                         parameter=list(support=.005, confidence=.19, maxlen=5))
-
     ## Apriori
     ## 
     ## Parameter specification:
@@ -975,13 +744,10 @@ make sense? Present your discoveries in an interesting and concise way.*
     ## set item appearances ...[0 item(s)] done [0.00s].
     ## set transactions ...[169 item(s), 15295 transaction(s)] done [0.00s].
     ## sorting and recoding items ... [101 item(s)] done [0.00s].
-    ## creating transaction tree ... done [0.00s].
+    ## creating transaction tree ... done [0.01s].
     ## checking subsets of size 1 2 3 done [0.00s].
     ## writing ... [50 rule(s)] done [0.00s].
     ## creating S4 object  ... done [0.00s].
-
-    # Look at the output... so many rules!
-    inspect(grocRules)
 
     ##      lhs                                    rhs                support    
     ## [1]  {butter milk}                       => {whole milk}       0.005034325
@@ -1086,8 +852,6 @@ make sense? Present your discoveries in an interesting and concise way.*
     ## [49] 0.3991770  0.01588754 2.429531  97  
     ## [50] 0.2614555  0.02425629 2.101399  97
 
-    inspect(subset(grocRules, subset=lift > 3 & confidence > 0.19))
-
     ##     lhs               rhs                support     confidence coverage  
     ## [1] {onions}       => {root vegetables}  0.005295848 0.2655738  0.01994116
     ## [2] {onions}       => {other vegetables} 0.007453416 0.3737705  0.01994116
@@ -1101,9 +865,6 @@ make sense? Present your discoveries in an interesting and concise way.*
     ## [4] 3.864547 194  
     ## [5] 3.481870 191
 
-    grocRules_graph = associations2igraph(subset(grocRules, lift>3), associationsAsNodes = FALSE)
-    igraph::write_graph(grocRules_graph, file='groceries.graphml', format = "graphml")
-
 For our confidence threshold we chose 0.19. This is just slightly below
 the confidence measure for the rule we found between ham and white
 bread, which we believe to be a good baseline for the idea of
@@ -1113,8 +874,6 @@ We chose this relatively high value for lift because we believe that the
 interesting information here lies in the predictive power of seeing a
 given item in a basket. Lower thresholds for lift started to clutter the
 data with rules which we believe were not very interesting.
-
-    knitr::include_graphics("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Exercise 4/association_map.jpeg")
 
 <img src="association_map.jpeg" width="500px" />
 
