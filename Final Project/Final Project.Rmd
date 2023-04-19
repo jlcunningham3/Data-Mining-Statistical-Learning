@@ -34,8 +34,25 @@ library(data.table)
 NY_BNB <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/listings 2.csv")
 ```
 
+## Abstract: summarize your question, your methods, your results, and your main conclusions in a few hundred words or less.
 
 
+
+&nbsp;
+
+## Introduction: Introduce the question you’re trying to answer at a reasonable level of detail. Give background and motivation for why it’s important.
+
+
+
+&nbsp;
+
+## Methods: Describe your data set and the methods you will use to analyze it.
+
+
+
+&nbsp;
+
+## Results: Tables, figures, and text that illustrate your findings. Keep the focus on the numbers here. You will interpret your results in the next section.
 
 ```{r 1}
 ####Data Cleaning
@@ -68,6 +85,10 @@ NY_BNB2 <-NY_BNB2%>%
 #although this is the closest overall model, some quantities of "occupancy" go upper than 1, we should modify:
 NY_BNB2$occupancy <- ifelse(NY_BNB2$occupancy > 1, 1, NY_BNB2$occupancy)
 
+# yearly revenue - multiply price * occupancy * 365
+NY_BNB2 <-NY_BNB2%>%
+  mutate(yearly_revenue = 365*price*occupancy)
+
 # Creating dummies:
 NY_BNB2 = NY_BNB2 %>%
   mutate(shared_room = ifelse(room_type == "Shared room", 1, 0))
@@ -77,22 +98,70 @@ NY_BNB2 = NY_BNB2 %>%
   mutate (entire_home = ifelse(room_type == "Entire home/apt", 1, 0))
 NY_BNB2 = NY_BNB2 %>%
   mutate (hotel_room = ifelse(room_type == "Hotel room", 1, 0))
-####the end of Data Cleaning
 
-view(NY_BNB2)
+# Calculate the mean occupancy rate per neighborhood
+neighborhood_occupancy <- NY_BNB2 %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_occupancy = mean(occupancy, na.rm = TRUE))
+
+NY_BNB2 <- merge(NY_BNB2, neighborhood_occupancy, by = "neighbourhood_cleansed")
+####the end of Data Cleaning
+```
+
+```{r 2}
+## Understanding the Data
+# Room Type
+ggplot(NY_BNB2, aes(x = room_type)) +
+  geom_bar() +
+  labs(x = "Room Type", y = "Frequency") 
+
+# Neighborhood
+ggplot(NY_BNB2, aes(x = neighbourhood_group_cleansed)) +
+  geom_bar() +
+  labs(x = "Neighborhood", y = "Frequency") 
+
+# Review Scores
+ggplot(NY_BNB2, aes(x = review_scores_rating))+
+  geom_histogram() +
+  labs(x = "Review Scores", y = "Frequency") 
+
+# Number of Reviews
+ggplot(NY_BNB2, aes(x = number_of_reviews))+
+  geom_histogram(bins = 50) +
+  labs(x = "Number of Reviews", y = "Frequency")
+
+# Occupancy
+ggplot(NY_BNB2, aes(x = occupancy))+
+  geom_histogram(bins = 50) +
+  labs(x = "Occupancy Rate", y = "Frequency")
+
+# Log Yearly Revenue
+ggplot(NY_BNB2, aes(x = log(yearly_revenue)))+
+  geom_histogram(bins = 50) +
+  labs(x = "Log Yearly Revenue", y = "Frequency")
 ```
 
 
-```{r 2}
+```{r 3}
 ## Understanding Price
-
-# Create a histogram using ggplot2
-ggplot(NY_BNB2, aes(x = price)) +
-  geom_histogram(binwidth = 10, color = "black", fill = "blue") +
-  labs(title = "Histogram of Price Values", x = "Price", y = "Frequency")
 
 # Filter the data to the price range between 0 and 1000 USD
 filtered_data <- NY_BNB2[NY_BNB2$price >= 0 & NY_BNB2$price <= 1000, ]
+
+# How many data points did we remove for the filtered price dataset?
+total_observations <- nrow(NY_BNB2)
+filtered_observations <- nrow(filtered_data)
+percentage_filtered <- (total_observations - filtered_observations) / total_observations * 100
+cat("Percentage of filtered observations:", percentage_filtered, "%\n")
+
+# We only lost ~0.7% of observations.
+
+# Calculate the mean price per neighborhood
+neighborhood_price <- filtered_data %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_price = mean(price, na.rm = TRUE))
+
+filtered_data <- merge(filtered_data, neighborhood_price, by = "neighbourhood_cleansed")
 
 # Create a histogram using ggplot2
 ggplot(filtered_data, aes(x = price)) +
@@ -100,7 +169,7 @@ ggplot(filtered_data, aes(x = price)) +
   labs(title = "Histogram of Price Values (0 - 1000 USD)", x = "Price", y = "Frequency")
 
 # Boxplot by neighborhood:
-ggplot(NY_BNB2, aes(x = neighbourhood_group_cleansed, y = price)) +
+ggplot(filtered_data, aes(x = neighbourhood_group_cleansed, y = price)) +
   geom_boxplot(color = "black", fill = "blue") +
   labs(title = "Boxplot of Price by Neighborhood Group", x = "Neighborhood Group", y = "Price")
 
@@ -110,6 +179,13 @@ median_prices_neighborhood <- NY_BNB2 %>%
   summarize(median_price = median(price))
 
 print(median_prices_neighborhood)
+
+# Yearly revenue by neighborhood
+median_revenue_neighborhood <- NY_BNB2 %>%
+  group_by(neighbourhood_group_cleansed) %>%
+  summarize(median_revenue = median(yearly_revenue))
+
+print(median_revenue_neighborhood)
 
 # Price by room type
 median_prices_room_type <- NY_BNB2 %>%
@@ -123,14 +199,24 @@ ggplot(filtered_data, aes(x = price, y = number_of_reviews)) +
   geom_point() +
   labs(title = "Scatterplot of Price by Number of Reviews", x = "Price", y = "Number of Reviews")
 
+# Price by review score, price under 1000
+ggplot(filtered_data, aes(x = price, y = review_scores_rating)) +
+  geom_point() +
+  labs(title = "Scatterplot of Price by Review Score", x = "Price", y = "Review Score")
+
 # Price by occupancy rate, price under 1000
 ggplot(filtered_data, aes(x = price, y = occupancy)) +
   geom_point() +
   labs(title = "Scatterplot of Price by Occupancy", x = "Price", y = "Occupancy")
+
+# Occupancy rate by review score
+ggplot(filtered_data, aes(x = occupancy, y = review_scores_rating)) +
+  geom_point() +
+  labs(title = "Scatterplot of Occupancy by Review Score", x = "Occupancy", y = "Review Score")
 ```
 
 
-```{r 3}
+```{r 4}
 ## Predicting Occupancy
 ############## the below codes have to be modified
 set.seed(1)
@@ -146,31 +232,43 @@ NY_BNB2_test$property_type <- factor(NY_BNB2_test$property_type, levels = levels
 # Calculate RMSE using modelr::rmse()
 modelr::rmse(model, NY_BNB2_test)
 
-# View the model summary
-summary(model)        
-modelr::rmse(model, NY_BNB2_test)
-
 # fit a single tree
 BNB.tree = rpart(occupancy ~ review_scores_rating + price+bedrooms+accommodates+host_identity_verified,
                        data=NY_BNB2_train, control = rpart.control(cp = 0.00001))
 modelr::rmse(BNB.tree, NY_BNB2_test)
 
 # boosted model
-boost = gbm(occupancy ~ latitude + longitude + host_identity_verified + accommodates + bedrooms + price + number_of_reviews + review_scores_rating + shared_room + private_room + entire_home + hotel_room, data=NY_BNB2, distribution = "gaussian", interaction.depth=6, n.trees=5000, shrinkage=.05, cv.folds = 2)
+boost = gbm(occupancy ~ latitude + longitude + host_identity_verified + accommodates + bedrooms + price + number_of_reviews + review_scores_rating + shared_room + private_room + entire_home + hotel_room, data=NY_BNB2, distribution = "gaussian", interaction.depth=6, n.trees=2000, shrinkage=.05, cv.folds = 2)
 modelr::rmse(boost, NY_BNB2_test)
+
+# PCA ?
+
+
+# Clustering ?
+
 
 #add predictions to data
 NY_BNB2 = NY_BNB2 %>%
-  mutate(occupancy_boost_pred = predict(boost, n.trees = 1400))
+  mutate(occupancy_boost_pred = predict(boost, n.trees = 1182))
+
+# Calculate the mean predicted occupancy rate per neighborhood
+neighborhood_pred_occupancy <- NY_BNB2 %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_predicted_occupancy = mean(occupancy_boost_pred, na.rm = TRUE))
+# Merge the data frames by the common column 'neighbourhood_cleansed'
+NY_BNB2 <- merge(NY_BNB2, neighborhood_pred_occupancy, by = "neighbourhood_cleansed")
 
 #create error measurements
 NY_BNB2 <- NY_BNB2 %>%
-  mutate("resid" = abs(occupancy_boost_pred - occupancy))%>%
-  mutate("percentErr" = resid/occupancy)
+  mutate("resid" = abs(mean_predicted_occupancy - mean_occupancy))%>%
+  mutate("percentErr" = resid/mean_occupancy)
+
+# Filter outliers for better mapping
+NY_BNB3 <- NY_BNB2[NY_BNB2$percentErr >= 0 & NY_BNB2$percentErr <= 5, ]
 ```
 
 
-```{r 4}
+```{r 5}
 ## Predicting Price ($0-1000)
 set.seed(1)
 filtered_data_split =  initial_split(filtered_data, prop=0.8)
@@ -185,24 +283,31 @@ BNB.tree1 = rpart(price ~ review_scores_rating + occupancy+bedrooms+accommodates
 modelr::rmse(BNB.tree1, filtered_data_test)
 
 # boosted model
-boost1 = gbm(price ~ latitude + longitude + host_identity_verified + accommodates + bedrooms + occupancy + number_of_reviews + review_scores_rating + shared_room + private_room + entire_home + hotel_room, data=filtered_data, distribution = "gaussian", interaction.depth=6, n.trees=5000, shrinkage=.05, cv.folds = 2)
+boost1 = gbm(price ~ latitude + longitude + host_identity_verified + accommodates + bedrooms + occupancy + number_of_reviews + review_scores_rating + shared_room + private_room + entire_home + hotel_room, data=filtered_data, distribution = "gaussian", interaction.depth=6, n.trees=1000, shrinkage=.05, cv.folds = 2)
 modelr::rmse(boost1, filtered_data_test)
 
 #add predictions to data
 filtered_data = filtered_data %>%
   mutate(price_boost1_pred = predict(boost1, n.trees = 692))
 
+# Calculate the mean predicted price per neighborhood
+neighborhood_pred_price <- filtered_data %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_predicted_price = mean(price_boost1_pred, na.rm = TRUE))
+# Merge the data frames by the common column 'neighbourhood_cleansed'
+filtered_data <- merge(filtered_data, neighborhood_pred_price, by = "neighbourhood_cleansed")
+
 #create error measurements
 filtered_data <- filtered_data %>%
-  mutate("resid1" = abs(price_boost1_pred - price))%>%
-  mutate("percentErr1" = resid1/price)
+  mutate("resid1" = abs(mean_predicted_price - mean_price))%>%
+  mutate("percentErr1" = resid1/mean_price)
 
 # Filter outliers for better mapping
-filtered_data1 <- filtered_data[filtered_data$percentErr1 >= 0 & filtered_data$percentErr1 <= 2, ]
+filtered_data1 <- filtered_data[filtered_data$percentErr1 >= 0 & filtered_data$percentErr1 <= 5, ]
 ```
 
 
-```{r 5}
+```{r 6}
 ## Predicting Occupancy with Text
 
 
@@ -210,69 +315,90 @@ filtered_data1 <- filtered_data[filtered_data$percentErr1 >= 0 & filtered_data$p
 
 
 
-```{r 6}
+```{r 7}
 ## Geography of Price and Occupancy
 library(plotly)
 
-NY_BNB2_sf <- st_as_sf(NY_BNB2, coords = c("longitude", "latitude"), crs = 4326)
+NY_BNB_sf <- st_as_sf(NY_BNB3, coords = c("longitude", "latitude"), crs = 4326)
 filtered_data1_sf <- st_as_sf(filtered_data1, coords = c("longitude", "latitude"), crs = 4326)
 
+geojson_file <- "/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/Borough_Boundaries.geojson"
 
-# Predicted Occupancy
+# Read the GeoJSON file
+nyc_shapefile <- st_read(geojson_file)
+nyc_shapefile1 <- nyc_shapefile %>%
+  st_transform(crs = st_crs(NY_BNB_sf))
+nyc_shapefile2 <- nyc_shapefile %>%
+  st_transform(crs = st_crs(filtered_data1_sf))
+
+# Predicted Occupancy by neighborhood
 ggplot() +
-  geom_sf(data = NY_BNB2_sf, aes(color = occupancy_boost_pred), size = 2) +
-  scale_color_gradient(low = "blue", high = "red") +
-  labs(title = "Predicted Occupancy Rates",
+  geom_sf(data = nyc_shapefile1, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = NY_BNB_sf, aes(color = mean_predicted_occupancy), size = 2) +
+  scale_color_gradientn(colours = viridisLite::viridis(10), name = "Predicted Occupancy Rate") +
+  theme_minimal() +
+  labs(title = "Predicted Occupancy Rates by Neighborhood",
        subtitle = "Color gradient represents predicted occupancy rates",
-       color = "Predicted Occupancy Rate") +
-  theme_minimal()
+       color = "Predicted Occupancy Rate")
 
-# True Occupancy
+# True Occupancy by Neighborhood
 ggplot() +
-  geom_sf(data = NY_BNB2_sf, aes(color = occupancy), size = 2) +
-  scale_color_gradient(low = "blue", high = "red") +
-  labs(title = "True Occupancy Rates",
+  geom_sf(data = nyc_shapefile1, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = NY_BNB_sf, aes(color = mean_occupancy), size = 2) +
+  scale_color_gradientn(colours = viridisLite::viridis(10), name = "True Occupancy Rate") +
+  theme_minimal() +
+  labs(title = "True Occupancy Rates by Neighborhood",
        subtitle = "Color gradient represents true occupancy rates",
-       color = "True Occupancy Rate") +
-  theme_minimal()
+       color = "True Occupancy Rate")
 
 # Residual Error of Occupancy
 ggplot() +
-  geom_sf(data = NY_BNB2_sf, aes(color = 100*percentErr), size = 2) +
-  scale_color_gradient(low = "yellow", high = "purple") +
+  geom_sf(data = nyc_shapefile1, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = NY_BNB_sf, aes(color = 100*percentErr), size = 2) +
+  scale_color_gradientn(colours = viridisLite::plasma(10), name = "Residual Error Rate") +
+  theme_minimal() +
   labs(title = "Residual Error Rate - Occupancy",
        subtitle = "Color gradient represents residual error rates",
-       color = "Residual Error Rate") +
-  theme_minimal()
+       color = "Residual Error Rate")
 
 
 ## Mapping Price
-# Predicted Price
+# Predicted Price by Neighborhood
 ggplot() +
-  geom_sf(data = filtered_data1_sf, aes(color = price_boost1_pred), size = 2) +
-  scale_color_gradient(low = "blue", high = "red") +
-  labs(title = "Predicted Price",
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data1_sf, aes(color = mean_predicted_price), size = 2) +
+  scale_color_gradientn(colours = viridisLite::viridis(10), name = "Predicted Price") +
+  theme_minimal() +
+  labs(title = "Predicted Price by Neighborhood",
        subtitle = "Color gradient represents predicted price",
-       color = "Predicted Price") +
-  theme_minimal()
+       color = "Predicted Price")
 
-# True Price
+# True Price by Neighborhood
 ggplot() +
-  geom_sf(data = filtered_data1_sf, aes(color = price), size = 2) +
-  scale_color_gradient(low = "blue", high = "red") +
-  labs(title = "True Price",
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data1_sf, aes(color = mean_price), size = 2) +
+  scale_color_gradientn(colours = viridisLite::viridis(10), name = "True Price") +
+  theme_minimal() +
+  labs(title = "True Price by Neighborhood",
        subtitle = "Color gradient represents true price",
-       color = "True Price") +
-  theme_minimal()
+       color = "True Price")
 
 # Residual Error of Price
 ggplot() +
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
   geom_sf(data = filtered_data1_sf, aes(color = 100*percentErr1), size = 2) +
-  scale_color_gradient(low = "yellow", high = "purple") +
+  scale_color_gradientn(colours = viridisLite::plasma(10), name = "Residual Error Rate") +
+  theme_minimal() +
   labs(title = "Residual Error Rate - Price",
        subtitle = "Color gradient represents residual error rates",
-       color = "Residual Error Rate") +
-  theme_minimal()
+       color = "Residual Error Rate")
 ```
+
+
+
+&nbsp;
+
+## Conclusion: Interpret what you found. What are the main lessons we should take away from your report?
+
 
 
