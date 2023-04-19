@@ -1,0 +1,278 @@
+---
+title: "Final Project"
+author: "Jack Cunningham & Ali Fazl"
+date: "`r Sys.Date()`"
+output: md_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gamlr)
+library(dplyr)
+library(tm)
+library(ggplot2)
+library(igraph)
+library(arules)
+library(arulesViz)
+library(mosaic)
+library(rpart)
+library(rpart.plot)
+library(rsample) 
+library(randomForest)
+library(lubridate)
+library(modelr)
+library(gbm)
+library(pdp)
+library(ggmap)
+library(tidycensus)
+library(MazamaLocationUtils)
+library(tigris)
+library(fuzzyjoin)
+library(sf)
+library(data.table)
+NY_BNB <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/listings 2.csv")
+```
+
+
+
+
+```{r 1}
+####Data Cleaning
+#remove unrelated columns
+NY_BNB <- NY_BNB[, -c(2,3,4,5,8,9,10,11,12,14,15,16,17,18,19,20,21,22,23,25,26,28,36,43,44,45,46,47,48,49,50,51,56,58,59,60,61,69,71,72,73,74)]
+
+
+#NY_BNB2 that contains only the rows of the original data frame NY_BNB
+#that do not have any missing values.
+NY_BNB2 <- NY_BNB[complete.cases(NY_BNB), ]
+
+#change $price to integer
+NY_BNB2$price <- as.integer(gsub("[,$]", "", NY_BNB2$price))
+
+#change "f,t" format to 0 and 1
+NY_BNB2$host_identity_verified <- ifelse(NY_BNB2$host_identity_verified == "t", 1, 0)
+NY_BNB2$instant_bookable <- ifelse(NY_BNB2$instant_bookable == "t", 1, 0)
+
+#Assumptions based on the general information:
+ # only 50% of guests write review, so we multiply "reviews_per_month" by 2 to find the monthly number of guests
+  #average length of stay in NY=3 nights
+#In different models, we see different assumptions for these variable; what we selected are the average of them
+#and we define them as variables to show they are changeable
+pr_review = 0.5 
+avg_stay_per_guestNY=3
+
+NY_BNB2 <-NY_BNB2%>%
+  mutate( occupancy = reviews_per_month * avg_stay_per_guestNY * (1/pr_review) / 30)
+
+#although this is the closest overall model, some quantities of "occupancy" go upper than 1, we should modify:
+NY_BNB2$occupancy <- ifelse(NY_BNB2$occupancy > 1, 1, NY_BNB2$occupancy)
+
+# Creating dummies:
+NY_BNB2 = NY_BNB2 %>%
+  mutate(shared_room = ifelse(room_type == "Shared room", 1, 0))
+NY_BNB2 = NY_BNB2 %>%
+  mutate(private_room = ifelse(room_type == "Private room", 1, 0))
+NY_BNB2 = NY_BNB2 %>%
+  mutate (entire_home = ifelse(room_type == "Entire home/apt", 1, 0))
+NY_BNB2 = NY_BNB2 %>%
+  mutate (hotel_room = ifelse(room_type == "Hotel room", 1, 0))
+####the end of Data Cleaning
+
+view(NY_BNB2)
+```
+
+
+```{r 2}
+## Understanding Price
+
+# Create a histogram using ggplot2
+ggplot(NY_BNB2, aes(x = price)) +
+  geom_histogram(binwidth = 10, color = "black", fill = "blue") +
+  labs(title = "Histogram of Price Values", x = "Price", y = "Frequency")
+
+# Filter the data to the price range between 0 and 1000 USD
+filtered_data <- NY_BNB2[NY_BNB2$price >= 0 & NY_BNB2$price <= 1000, ]
+
+# Create a histogram using ggplot2
+ggplot(filtered_data, aes(x = price)) +
+  geom_histogram(binwidth = 10, color = "black", fill = "blue") +
+  labs(title = "Histogram of Price Values (0 - 1000 USD)", x = "Price", y = "Frequency")
+
+# Boxplot by neighborhood:
+ggplot(NY_BNB2, aes(x = neighbourhood_group_cleansed, y = price)) +
+  geom_boxplot(color = "black", fill = "blue") +
+  labs(title = "Boxplot of Price by Neighborhood Group", x = "Neighborhood Group", y = "Price")
+
+# Price by neighborhood
+median_prices_neighborhood <- NY_BNB2 %>%
+  group_by(neighbourhood_group_cleansed) %>%
+  summarize(median_price = median(price))
+
+print(median_prices_neighborhood)
+
+# Price by room type
+median_prices_room_type <- NY_BNB2 %>%
+  group_by(room_type) %>%
+  summarize(median_price = median(price))
+
+print(median_prices_room_type)
+
+# Price by number of reviews, price under 1000
+ggplot(filtered_data, aes(x = price, y = number_of_reviews)) +
+  geom_point() +
+  labs(title = "Scatterplot of Price by Number of Reviews", x = "Price", y = "Number of Reviews")
+
+# Price by occupancy rate, price under 1000
+ggplot(filtered_data, aes(x = price, y = occupancy)) +
+  geom_point() +
+  labs(title = "Scatterplot of Price by Occupancy", x = "Price", y = "Occupancy")
+```
+
+
+```{r 3}
+## Predicting Occupancy
+############## the below codes have to be modified
+set.seed(1)
+NY_BNB2_split =  initial_split(NY_BNB2, prop=0.8)
+NY_BNB2_train = training(NY_BNB2_split)
+NY_BNB2_test  = testing(NY_BNB2_split)
+
+model <- lm(occupancy ~ review_scores_rating + price+bedrooms+neighbourhood_group_cleansed+property_type, data = NY_BNB2_train)
+
+# Convert property_type to a factor with the same levels as in the training data set
+NY_BNB2_test$property_type <- factor(NY_BNB2_test$property_type, levels = levels(NY_BNB2$property_type))
+
+# Calculate RMSE using modelr::rmse()
+modelr::rmse(model, NY_BNB2_test)
+
+# View the model summary
+summary(model)        
+modelr::rmse(model, NY_BNB2_test)
+
+# fit a single tree
+BNB.tree = rpart(occupancy ~ review_scores_rating + price+bedrooms+accommodates+host_identity_verified,
+                       data=NY_BNB2_train, control = rpart.control(cp = 0.00001))
+modelr::rmse(BNB.tree, NY_BNB2_test)
+
+# boosted model
+boost = gbm(occupancy ~ latitude + longitude + host_identity_verified + accommodates + bedrooms + price + number_of_reviews + review_scores_rating + shared_room + private_room + entire_home + hotel_room, data=NY_BNB2, distribution = "gaussian", interaction.depth=6, n.trees=5000, shrinkage=.05, cv.folds = 2)
+modelr::rmse(boost, NY_BNB2_test)
+
+#add predictions to data
+NY_BNB2 = NY_BNB2 %>%
+  mutate(occupancy_boost_pred = predict(boost, n.trees = 1400))
+
+#create error measurements
+NY_BNB2 <- NY_BNB2 %>%
+  mutate("resid" = abs(occupancy_boost_pred - occupancy))%>%
+  mutate("percentErr" = resid/occupancy)
+```
+
+
+```{r 4}
+## Predicting Price ($0-1000)
+set.seed(1)
+filtered_data_split =  initial_split(filtered_data, prop=0.8)
+filtered_data_train = training(filtered_data_split)
+filtered_data_test  = testing(filtered_data_split)
+
+model1 <- lm(price ~ review_scores_rating + occupancy+bedrooms+neighbourhood_group_cleansed+property_type, data = filtered_data_train)
+
+# fit a single tree
+BNB.tree1 = rpart(price ~ review_scores_rating + occupancy+bedrooms+accommodates+host_identity_verified,
+                       data=filtered_data_train, control = rpart.control(cp = 0.00001))
+modelr::rmse(BNB.tree1, filtered_data_test)
+
+# boosted model
+boost1 = gbm(price ~ latitude + longitude + host_identity_verified + accommodates + bedrooms + occupancy + number_of_reviews + review_scores_rating + shared_room + private_room + entire_home + hotel_room, data=filtered_data, distribution = "gaussian", interaction.depth=6, n.trees=5000, shrinkage=.05, cv.folds = 2)
+modelr::rmse(boost1, filtered_data_test)
+
+#add predictions to data
+filtered_data = filtered_data %>%
+  mutate(price_boost1_pred = predict(boost1, n.trees = 692))
+
+#create error measurements
+filtered_data <- filtered_data %>%
+  mutate("resid1" = abs(price_boost1_pred - price))%>%
+  mutate("percentErr1" = resid1/price)
+
+# Filter outliers for better mapping
+filtered_data1 <- filtered_data[filtered_data$percentErr1 >= 0 & filtered_data$percentErr1 <= 2, ]
+```
+
+
+```{r 5}
+## Predicting Occupancy with Text
+
+
+```
+
+
+
+```{r 6}
+## Geography of Price and Occupancy
+library(plotly)
+
+NY_BNB2_sf <- st_as_sf(NY_BNB2, coords = c("longitude", "latitude"), crs = 4326)
+filtered_data1_sf <- st_as_sf(filtered_data1, coords = c("longitude", "latitude"), crs = 4326)
+
+
+# Predicted Occupancy
+ggplot() +
+  geom_sf(data = NY_BNB2_sf, aes(color = occupancy_boost_pred), size = 2) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Predicted Occupancy Rates",
+       subtitle = "Color gradient represents predicted occupancy rates",
+       color = "Predicted Occupancy Rate") +
+  theme_minimal()
+
+# True Occupancy
+ggplot() +
+  geom_sf(data = NY_BNB2_sf, aes(color = occupancy), size = 2) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "True Occupancy Rates",
+       subtitle = "Color gradient represents true occupancy rates",
+       color = "True Occupancy Rate") +
+  theme_minimal()
+
+# Residual Error of Occupancy
+ggplot() +
+  geom_sf(data = NY_BNB2_sf, aes(color = 100*percentErr), size = 2) +
+  scale_color_gradient(low = "yellow", high = "purple") +
+  labs(title = "Residual Error Rate - Occupancy",
+       subtitle = "Color gradient represents residual error rates",
+       color = "Residual Error Rate") +
+  theme_minimal()
+
+
+## Mapping Price
+# Predicted Price
+ggplot() +
+  geom_sf(data = filtered_data1_sf, aes(color = price_boost1_pred), size = 2) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Predicted Price",
+       subtitle = "Color gradient represents predicted price",
+       color = "Predicted Price") +
+  theme_minimal()
+
+# True Price
+ggplot() +
+  geom_sf(data = filtered_data1_sf, aes(color = price), size = 2) +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "True Price",
+       subtitle = "Color gradient represents true price",
+       color = "True Price") +
+  theme_minimal()
+
+# Residual Error of Price
+ggplot() +
+  geom_sf(data = filtered_data1_sf, aes(color = 100*percentErr1), size = 2) +
+  scale_color_gradient(low = "yellow", high = "purple") +
+  labs(title = "Residual Error Rate - Price",
+       subtitle = "Color gradient represents residual error rates",
+       color = "Residual Error Rate") +
+  theme_minimal()
+```
+
+
