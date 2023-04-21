@@ -49,29 +49,7 @@ NY_Summer <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Lear
 NY_Fall <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/sept22.csv")
 ```
 
-## Abstract: summarize your question, your methods, your results, and your main conclusions in a few hundred words or less.
 
-
-
-&nbsp;
-
-## Introduction: Introduce the question you’re trying to answer at a reasonable level of detail. Give background and motivation for why it’s important.
-
-The rise of the sharing economy has transformed the way people travel and seek accommodations. Platforms such as Airbnb have gained popularity by allowing property owners to rent out their homes or rooms to travelers, offering an alternative to traditional hotels. New York City, being one of the world's most visited cities, has experienced significant growth in its Airbnb market. Accurate prediction of Airbnb prices is essential for hosts to optimize their revenue and for travelers to make informed decisions when selecting accommodations. This project aims to examine the factors connected to Airbnb prices in New York City, focusing on the role of spatial features.
-
-In this project, we employ machine learning techniques, including LASSO regression, random forest, and gradient boosting, to predict Airbnb prices based on a comprehensive set of variables. We leverage clustering algorithms, ie. DBSCAN, to capture spatial patterns in the data and map predicted vs. actual prices. By doing so, we aim to enhance our understanding of the factors driving Airbnb prices in New York City and provide valuable insights for hosts and travelers alike.
-
-
-
-&nbsp;
-
-## Methods: Describe your data set and the methods you will use to analyze it.
-
-
-
-&nbsp;
-
-## Results: Tables, figures, and text that illustrate your findings. Keep the focus on the numbers here. You will interpret your results in the next section.
 
 ```{r 1}
 ####Data Cleaning
@@ -184,6 +162,47 @@ view(NY_reduced)
 ####the end of Data Cleaning
 ```
 
+## Abstract: 
+*summarize your question, your methods, your results, and your main conclusions in a few hundred words or less.*
+
+
+
+&nbsp;
+
+## Introduction: 
+*Introduce the question you’re trying to answer at a reasonable level of detail. Give background and motivation for why it’s important.*
+
+The rise of the sharing economy has transformed the way people travel and seek accommodations. Platforms such as Airbnb have gained popularity by allowing property owners to rent out their homes or rooms to travelers, offering an alternative to traditional hotels. New York City, being one of the world's most visited cities, has experienced significant growth in its Airbnb market. Accurate prediction of Airbnb prices is essential for hosts to optimize their revenue and for travelers to make informed decisions when selecting accommodations. This project aims to examine the factors connected to Airbnb prices in New York City, focusing on the role of spatial features.
+
+In this project, we employ machine learning techniques, including LASSO regression, random forest, and gradient boosting, to predict Airbnb prices based on a comprehensive set of variables. We leverage clustering algorithms, ie. DBSCAN, to capture spatial patterns in the data and map predicted vs. actual prices. By doing so, we aim to enhance our understanding of the factors driving Airbnb prices in New York City and provide valuable insights for hosts and travelers alike.
+
+
+
+&nbsp;
+
+## Methods: 
+*Describe your data set and the methods you will use to analyze it.*
+
+### Data
+
+We have four datasets that we've combined into one. Each dataset contains the entire set of scraped NYC AirBnB listings at the following dates: June 15, 2022; September 15, 2022; December 15, 2022; and March 15, 2023. The data contain 70+ variables and more than 160,000 total observations (roughly 40,000 per quarter). These data come from InsideAirbnb: http://insideairbnb.com/get-the-data/.
+
+We made some important modifications to the dataset in order to meet our needs:
+- Creating dummy variables for each season (June is summer, September is fall, December is winter, and March is spring), depending on which initial dataset the observation came from.
+- Modifying the host_since variable to provide a number of years since the start of the host's presence on AirBnB.
+- Removing roughly half the columns which we did not use in our analysis.
+- Dropping all observations with host_since < 1 year. This ensures that all the listings come from hosts who have been on the platform for at least one year, helping to ease concerns about seasonal effects.
+- Dropping all observations with NA values in any of the fields. Among other effects, this ensures that our dataset includes only listings with at least one review, host-provided descriptions, and complete information about amenities, bedrooms, etc.
+- Manipulating variables to be easier to work with, e.g. adding dummy variables for room_type and changing f/t format to 0/1.
+- Filtering price outliers (those over $1500, roughly 0.4% of our dataset).
+
+We then took a random sample of 25% of the cleaned data to use for our analysis. This sample still has over 25,000 observations of 42 variables. Reducing the dataset via random selection makes it easier to work with computationally while not sacrificing much accuracy, especially since we are working with full data on all of NYC's AirBnBs.
+
+The most important reason we combined the four datasets into one is that it gives us a snapshot of seasonality. We only have price data for the dates that each dataset was scraped (6/15/22, 9/15/22, 12/15/22, and 3/15/23). One limitation of our dataset is that we don't have daily price data for a year; this would have been desired in order to uncover seasonal trends and variation with more fidelity. However, quarterly price data provides a rough proxy of seasonal price trends. As our results will show, season is not a particularly important predictor of NYC AirBnB prices.
+
+One other important note about our dataset is that we are treating each listing as unique, despite the fact that many of the listings are run by the same hosts in each period. The reason for this approach is that many of the variables we use as predictors can change from one quarter to the next; e.g., review scores, availability data, and number of reviews, among many more. Hence, it makes more sense to treat each observation as unique, rather than simply extracting the seasonal prices for each listing and attaching them to one of the seasonal datasets.
+
+The below plots give a sense of some of the important variables in this dataset, including frequency of listings of each room type and in each borough, and the distribution of review scores (heavily right-skewed).
 
 ```{r 2}
 ## Understanding the Data
@@ -203,6 +222,18 @@ ggplot(NY_reduced, aes(x = review_scores_rating))+
   labs(x = "Review Scores", y = "Frequency") 
 ```
 
+&nbsp;
+
+### Approach
+
+
+
+&nbsp;
+
+## Results: 
+*Tables, figures, and text that illustrate your findings. Keep the focus on the numbers here. You will interpret your results in the next section.*
+
+### Preliminary Analysis of Price:
 
 ```{r 3}
 ## Understanding Price
@@ -214,7 +245,6 @@ filtered_data <- NY_reduced[NY_reduced$price >= 0 & NY_reduced$price <= 1500, ]
 total_observations <- nrow(NY_reduced)
 filtered_observations <- nrow(filtered_data)
 percentage_filtered <- (total_observations - filtered_observations) / total_observations * 100
-cat("Percentage of filtered observations:", percentage_filtered, "%\n")
 
 # We only lost ~0.4% of observations.
 
@@ -241,14 +271,14 @@ median_prices_neighborhood <- filtered_data %>%
   group_by(neighbourhood_group_cleansed) %>%
   summarize(median_price = median(price))
 
-print(median_prices_neighborhood)
+kable(median_prices_neighborhood)
 
 # Price by room type
 median_prices_room_type <- NY_reduced %>%
   group_by(room_type) %>%
   summarize(median_price = median(price))
 
-print(median_prices_room_type)
+kable(median_prices_room_type)
 
 # Price by season
 # Compute the mean price for each season
@@ -258,7 +288,7 @@ median_price_by_season <- NY_reduced %>%
   group_by(season) %>%
   summarise(median_price = median(price, na.rm = TRUE))
 
-print(median_price_by_season)
+kable(median_price_by_season)
 
 # Price by review score, price under 1500
 ggplot(filtered_data, aes(x = price, y = review_scores_rating)) +
@@ -267,7 +297,7 @@ ggplot(filtered_data, aes(x = price, y = review_scores_rating)) +
        y = "Review Score")
 ```
 
-
+### Building a Prediction Model
 
 ```{r 4}
 ## Predicting Price ($0-1500)
@@ -302,7 +332,6 @@ lm_lasso1 <- lm(log_price ~ spatial_cluster + latitude*longitude + host_since +
                   reviews_per_month + review_scores_location + review_scores_value +
                   review_scores_rating + instant_bookable + entire_home + shared_room +
                   private_room + spring + summer + fall, data = filtered_data_train)
-modelr::rmse(lm_lasso1, filtered_data_test)
 
 # random tree
 BNB.tree1 = rpart(log_price ~ spatial_cluster + host_since + 
@@ -313,7 +342,6 @@ BNB.tree1 = rpart(log_price ~ spatial_cluster + host_since +
                     review_scores_rating + instant_bookable + entire_home + shared_room
                   + private_room + spring + summer + fall + winter,
                        data=filtered_data_train, control = rpart.control(cp = 0.00001))
-modelr::rmse(BNB.tree1, filtered_data_test)
 
 # random forest
 BNB.forest1 = randomForest(log_price ~ spatial_cluster + latitude*longitude + 
@@ -326,7 +354,6 @@ BNB.forest1 = randomForest(log_price ~ spatial_cluster + latitude*longitude +
                              instant_bookable + entire_home + shared_room + 
                              private_room + spring + summer + fall + winter,
                            data=filtered_data_train, importance=TRUE)
-modelr::rmse(BNB.forest1, filtered_data_test)
 
 # boosted model
 BNB.boost1 = gbm(log_price ~ spatial_cluster + latitude*longitude + host_since +
@@ -338,7 +365,6 @@ BNB.boost1 = gbm(log_price ~ spatial_cluster + latitude*longitude + host_since +
                    spring + summer + fall + winter, 
                  data=filtered_data_train, distribution = "gaussian",
                  interaction.depth=6, n.trees=5000, shrinkage=.05, cv.folds = 2)
-modelr::rmse(BNB.boost1, filtered_data_test)
 
 # Root mean squared error - log price
 RMSE3 = tibble("model" = c("lm2", "lm_lasso1", "BNB.tree1", "BNB.forest1", "BNB.boost1"),
@@ -355,6 +381,10 @@ varImpPlot(BNB.forest1) # Create a variable importance plot
 ```
 
 
+
+&nbsp;
+
+### Mapping
 
 ```{r 6}
 # Price:
@@ -400,8 +430,7 @@ filtered_data <- filtered_data %>%
 ```
 
 
-
-```{r 7}
+```{r 7, message=FALSE, warning=FALSE}
 ## Geography of Price
 library(plotly)
 
