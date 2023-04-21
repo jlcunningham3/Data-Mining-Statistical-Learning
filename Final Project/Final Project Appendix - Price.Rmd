@@ -1,0 +1,233 @@
+---
+title: "Final Project - Price"
+author: "Jack Cunningham & Ali Fazl"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gamlr)
+library(parallel)
+library(dplyr)
+library(knitr)
+library(glmnet)
+library(tm)
+library(ggplot2)
+library(igraph)
+library(arules)
+library(arulesViz)
+library(mosaic)
+library(rpart)
+library(rpart.plot)
+library(rsample) 
+library(randomForest)
+library(lubridate)
+library(modelr)
+library(gbm)
+library(pdp)
+library(ggmap)
+library(tidycensus)
+library(MazamaLocationUtils)
+library(tigris)
+library(fuzzyjoin)
+library(sf)
+library(data.table)
+num_cores <- detectCores()
+NY_BNB <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/listings 2.csv")
+dec22 <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/dec22.csv")
+jun22 <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/jun22.csv")
+sept22 <- read.csv("/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/sept22.csv")
+```
+
+```{r 1}
+####Data Cleaning
+#remove unrelated columns
+NY_BNB <- NY_BNB[, -c(2,3,4,5,8,9,10,11,12,14,15,16,17,18,19,20,21,22,23,25,26,28,36,43,44,45,46,47,48,49,50,51,56,58,59,60,61,69,71,72,73,74)]
+
+
+#NY_BNB2 that contains only the rows of the original data frame NY_BNB
+#that do not have any missing values.
+NY_BNB2 <- NY_BNB[complete.cases(NY_BNB), ]
+
+#change $price to integer
+NY_BNB2$price <- as.integer(gsub("[,$]", "", NY_BNB2$price))
+
+#change "f,t" format to 0 and 1
+NY_BNB2$host_identity_verified <- ifelse(NY_BNB2$host_identity_verified == "t", 1, 0)
+NY_BNB2$instant_bookable <- ifelse(NY_BNB2$instant_bookable == "t", 1, 0)
+
+#Assumptions based on the general information:
+ # only 50% of guests write review, so we multiply "reviews_per_month" by 2 to find the monthly number of guests
+  #average length of stay in NY=3 nights
+#In different models, we see different assumptions for these variable; what we selected are the average of them
+#and we define them as variables to show they are changeable
+pr_review = 0.5 
+avg_stay_per_guestNY=3
+
+NY_BNB2 <-NY_BNB2%>%
+  mutate( occupancy = reviews_per_month * avg_stay_per_guestNY * (1/pr_review) / 30)
+
+#although this is the closest overall model, some quantities of "occupancy" go upper than 1, we should modify:
+NY_BNB2$occupancy <- ifelse(NY_BNB2$occupancy > 1, 1, NY_BNB2$occupancy)
+
+# yearly revenue - multiply price * occupancy * 365
+NY_BNB2 <-NY_BNB2%>%
+  mutate(yearly_revenue = 365*price*occupancy)
+
+# Creating dummies:
+NY_BNB2 = NY_BNB2 %>%
+  mutate(shared_room = ifelse(room_type == "Shared room", 1, 0))
+NY_BNB2 = NY_BNB2 %>%
+  mutate(private_room = ifelse(room_type == "Private room", 1, 0))
+NY_BNB2 = NY_BNB2 %>%
+  mutate (entire_home = ifelse(room_type == "Entire home/apt", 1, 0))
+NY_BNB2 = NY_BNB2 %>%
+  mutate (hotel_room = ifelse(room_type == "Hotel room", 1, 0))
+
+# Calculate the mean occupancy rate per neighborhood
+neighborhood_occupancy <- NY_BNB2 %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_occupancy = mean(occupancy, na.rm = TRUE))
+
+NY_BNB2 <- merge(NY_BNB2, neighborhood_occupancy, by = "neighbourhood_cleansed")
+
+# Filter the data to the price range between 0 and 1000 USD
+filtered_data <- NY_BNB2[NY_BNB2$price >= 0 & NY_BNB2$price <= 1000, ]
+
+# Calculate the mean price per neighborhood
+neighborhood_price <- filtered_data %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_price = mean(price, na.rm = TRUE))
+
+filtered_data <- merge(filtered_data, neighborhood_price, by = "neighbourhood_cleansed")
+
+
+## Merging datasets to get more price history
+# Our main dataset was scraped in March 2023
+# We have additional datasets that we can get price from in order to get a better
+# measure of average yearly price.
+NY_BNB4 <- NY_BNB2 %>%
+  inner_join(select(dec22, id, price), by = "id") %>%
+  inner_join(select(sept22, id, price), by = "id") %>%
+  inner_join(select(jun22, id, price), by = "id")
+
+view(NY_BNB4)
+
+NY_BNB4 = NY_BNB4 %>%
+  mutate(mean_price = (price.x + price.y + price.x.x + price.y.y)/4)
+####the end of Data Cleaning
+```
+
+```{r 2}
+## Predicting Price ($0-1000)
+set.seed(2)
+filtered_data_split = initial_split(filtered_data, prop=0.8)
+filtered_data_train = training(filtered_data_split)
+filtered_data_test  = testing(filtered_data_split)
+
+lm2 <- lm(price ~ review_scores_rating + occupancy + bedrooms + neighbourhood_group_cleansed, data = filtered_data_train)
+
+#LASSO
+# create your own numeric feature matrix.
+x1 = sparse.model.matrix(price ~ .-1, data=filtered_data) # do -1 to drop intercept!
+y1 = filtered_data$price
+
+# fit a single lasso
+set.seed(1) # Set seed for reproducibility
+lasso1 = gamlr(x1, y1, family="gaussian", penalty.factor=1)
+
+# the coefficients at the AIC-optimizing value
+scbeta1 = coef(lasso1)
+scbeta1_nonzero <- which(scbeta1 != 0, arr.ind = TRUE)
+# That's a lot of features features...
+
+# Linear Model, (some) LASSO features
+lm_lasso1 <- lm(price ~ neighbourhood_group_cleansed + host_total_listings_count + accommodates + bedrooms + minimum_nights + availability_30 + availability_90 + review_scores_cleanliness + review_scores_value + instant_bookable + occupancy, data = filtered_data_train)
+
+# Random Tree
+# fit a single tree
+BNB.tree1 = rpart(price ~ neighbourhood_group_cleansed + host_total_listings_count + accommodates + bedrooms + minimum_nights + availability_30 + availability_90 + review_scores_cleanliness + review_scores_value + instant_bookable + occupancy,
+                       data=filtered_data_train, control = rpart.control(cp = 0.00001))
+
+# random forest
+BNB.forest1 = randomForest(price ~ neighbourhood_group_cleansed + host_total_listings_count + accommodates + bedrooms + minimum_nights + availability_30 + availability_90 + review_scores_cleanliness + review_scores_value + instant_bookable + occupancy, data=filtered_data_train, importance=TRUE)
+
+# boosted model
+BNB.boost1 = gbm(price ~ host_total_listings_count + accommodates + bedrooms + minimum_nights + availability_30 + availability_90 + review_scores_cleanliness + review_scores_value + occupancy, data=filtered_data_train, distribution = "gaussian", interaction.depth=6, n.trees=1000, shrinkage=.05, cv.folds = 2)
+
+# Root mean squared error - price
+RMSE3 = tibble("model" = c("lm2", "lm_lasso1", "BNB.tree1", "BNB.forest1", "BNB.boost1"), "RMSE" = c(rmse(lm2, filtered_data_test), rmse(lm_lasso1, filtered_data_test), rmse(BNB.tree1, filtered_data_test), rmse(BNB.forest1, filtered_data_test), rmse(BNB.boost1, filtered_data_test)))
+RMSE3.1 = kable(RMSE3, caption = "RMSE of each model (price)")
+RMSE3.1
+```
+
+```{r 3}
+# Price:
+forest1 = randomForest(price ~ neighbourhood_group_cleansed + host_total_listings_count + accommodates + bedrooms + minimum_nights + availability_30 + availability_90 + review_scores_cleanliness + review_scores_value + instant_bookable + occupancy, data=filtered_data, importance=TRUE)
+
+#add predictions to data
+filtered_data = filtered_data %>%
+  mutate(price_forest1_pred = predict(forest1))
+
+# Calculate the mean predicted price per neighborhood
+neighborhood_pred_price <- filtered_data %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(mean_predicted_price = mean(price_forest1_pred, na.rm = TRUE))
+# Merge the data frames by the common column 'neighbourhood_cleansed'
+filtered_data <- merge(filtered_data, neighborhood_pred_price, by = "neighbourhood_cleansed")
+
+#create error measurements
+filtered_data <- filtered_data %>%
+  mutate("resid1" = abs(mean_predicted_price - mean_price))%>%
+  mutate("percentErr1" = resid1/mean_price)
+
+# Filter outliers for better mapping
+filtered_data1 <- filtered_data[filtered_data$percentErr1 >= 0 & filtered_data$percentErr1 <= 5, ]
+```
+
+```{r 4}
+## Geography of Price and Occupancy
+library(plotly)
+
+filtered_data1_sf <- st_as_sf(filtered_data1, coords = c("longitude", "latitude"), crs = 4326)
+
+geojson_file <- "/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/Borough_Boundaries.geojson"
+
+# Read the GeoJSON file
+nyc_shapefile <- st_read(geojson_file)
+nyc_shapefile2 <- nyc_shapefile %>%
+  st_transform(crs = st_crs(filtered_data1_sf))
+
+## Mapping Price
+# Predicted Price by Neighborhood
+ggplot() +
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data1_sf, aes(color = mean_predicted_price), size = 1) +
+  scale_color_gradientn(colours = viridisLite::viridis(10), name = "Predicted Price") +
+  theme_minimal() +
+  labs(title = "Predicted Price by Neighborhood",
+       subtitle = "Color gradient represents predicted price",
+       color = "Predicted Price")
+
+# True Price by Neighborhood
+ggplot() +
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data1_sf, aes(color = mean_price), size = 1) +
+  scale_color_gradientn(colours = viridisLite::viridis(10), name = "True Price") +
+  theme_minimal() +
+  labs(title = "True Price by Neighborhood",
+       subtitle = "Color gradient represents true price",
+       color = "True Price")
+
+# Residual Error of Price
+ggplot() +
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data1_sf, aes(color = 100*percentErr1), size = 1) +
+  scale_color_gradientn(colours = viridisLite::plasma(10), name = "Residual Error Rate") +
+  theme_minimal() +
+  labs(title = "Residual Error Rate - Price",
+       subtitle = "Color gradient represents residual error rates",
+       color = "Residual Error Rate")
+```
