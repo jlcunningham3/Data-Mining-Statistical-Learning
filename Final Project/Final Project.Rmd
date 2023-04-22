@@ -9,8 +9,10 @@ output: pdf_document
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 options(`mosaic:parallelMessage` = FALSE)
+library(cowplot)
 library(tidyverse)
 library(gamlr)
+library(gridExtra)
 library(tidytext)
 library(dbscan)
 library(parallel)
@@ -108,7 +110,7 @@ NY_BNB <- rbind(NY_Spring, NY_Summer, NY_Fall, NY_Winter)
 
 write.csv(NY_BNB, file = "/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/merged_data.csv", row.names = FALSE)
 
-#remove unrelated columns
+#remove unused columns
 NY_BNB <- NY_BNB[, -c(2,3,4,5,8,9,10,11,12,14,15,16,17,18,19,20,21,22,23,
                       25,26,28,33,36,43,44,45,46,47,48,49,50,51,56,58,59,
                       60,61,69,71,72,73,74)]
@@ -140,23 +142,43 @@ NY_BNB2 = NY_BNB2 %>%
 NY_BNB2 = NY_BNB2 %>%
   mutate (hotel_room = ifelse(room_type == "Hotel room", 1, 0))
 
-## Location clusters
-coords <- cbind(NY_BNB2$latitude, NY_BNB2$longitude)
-
-# Run the DBSCAN clustering algorithm
-# Set the eps parameter (maximum distance between points in the same cluster)
-# and the MinPts parameter (minimum number of points to form a dense region)
-dbscan_result <- dbscan(coords, eps = 0.01, minPts = 5)
-
-# Add the cluster assignments to the dataset
-NY_BNB2$spatial_cluster <- as.factor(dbscan_result$cluster)
+# amenities:
+words_to_search <- c("Pets allowed", "Kitchen", "Elevator", "Air conditioning", "Heating", "Long term stays allowed")
+NY_BNB2 <- NY_BNB2 %>%
+  mutate(Pets_allowed = as.integer(grepl(words_to_search[1], amenities)),
+         Kitchen = as.integer(grepl(words_to_search[2], amenities)),
+         Elevator = as.integer(grepl(words_to_search[3], amenities)),
+         Air_conditioning = as.integer(grepl(words_to_search[4], amenities)),
+         Heating = as.integer(grepl(words_to_search[5], amenities)),
+         Long_term_allowed = as.integer(grepl(words_to_search[6], amenities)))
 
 # Random sample:
 set.seed(1)
 NY_reduced <- NY_BNB2 %>%
   sample_frac(0.25)
 
-view(NY_reduced)
+## Location clusters
+coords <- cbind(NY_reduced$latitude, NY_reduced$longitude)
+
+# Run the DBSCAN clustering algorithm
+# Set the eps parameter (maximum distance between points in the same cluster)
+# and the MinPts parameter (minimum number of points to form a dense region)
+dbscan_result <- dbscan(coords, eps = 0.0025, minPts = 20)
+
+# Add the cluster assignments to the dataset
+NY_reduced$spatial_cluster <- as.factor(dbscan_result$cluster)
+
+# Filter the data to the price range between 0 and 1500 USD
+filtered_data <- NY_reduced[NY_reduced$price >= 0 & NY_reduced$price <= 1500, ]
+
+# How many data points did we remove for the filtered price dataset?
+total_observations <- nrow(NY_reduced)
+filtered_observations <- nrow(filtered_data)
+percentage_filtered <- (total_observations - filtered_observations) / total_observations * 100
+
+# We only lost ~0.4% of observations.
+
+view(filtered_data)
 ####the end of Data Cleaning
 ```
 
@@ -202,7 +224,9 @@ We made some important modifications to the dataset in order to meet our needs:
 
 -   Manipulating variables to be easier to work with, e.g. adding dummy variables for room_type and changing f/t format to 0/1.
 
-* Using the DBSCAN clustering algorithm to spatially cluster the listings, to create another spatial variable beyond latitude and longitude to use as a predictor in our models.
+-   Using the DBSCAN clustering algorithm to spatially cluster the listings, to create another spatial variable beyond latitude and longitude to use as a predictor in our models.
+
+-   Extracting six important terms from the "amenities" list to use as predictors in our models.
 
 -   Filtering price outliers (those over \$1500, roughly 0.4% of our dataset).
 
@@ -212,27 +236,60 @@ The most important reason we combined the four datasets into one is that it give
 
 One other important note about our dataset is that we are treating each listing as unique, despite the fact that many of the listings are run by the same hosts in each period. The reason for this approach is that many of the variables we use as predictors can change from one quarter to the next; e.g., review scores, availability data, and number of reviews, among many more. Hence, it makes more sense to treat each observation as unique, rather than simply extracting the seasonal prices for each listing and attaching them to one of the seasonal datasets.
 
-The plots that follow give a sense of some of the important variables in this dataset, including frequency of listings of each room type and in each borough, and the distribution of review scores.
+The plots that follow give a sense of how price relates to some of the important variables in this dataset, including how many guests the listing can accommodate, minimum length of stay, listings of each room type, and overall review scores.
 
-```{r 2}
+&nbsp;
+
+```{r 2, fig.width=6.5}
 ## Understanding the Data
-# Room Type
-ggplot(NY_reduced, aes(x = room_type)) +
-  geom_bar() +
-  labs(x = "Room Type", y = "Frequency") 
+# Calculate mean price for each integer value of accommodates
+mean_price_by_accommodates <- filtered_data %>%
+  group_by(accommodates) %>%
+  summarize(mean_price = mean(price, na.rm = TRUE))
 
-# Neighborhood
-ggplot(NY_reduced, aes(x = neighbourhood_group_cleansed)) +
-  geom_bar() +
-  labs(x = "Neighborhood", y = "Frequency") 
+# Plot the mean price for each integer value of accommodates
+plot_1 <- ggplot(mean_price_by_accommodates, aes(x = accommodates, y = mean_price)) +
+  geom_point() +
+  geom_line(group = 1) +
+  labs(title = "Mean Price by Accommodates",
+       x = "Accommodates",
+       y = "Mean Price") +
+  theme_minimal()
 
-# Review Scores
-ggplot(NY_reduced, aes(x = review_scores_rating))+
-  geom_histogram(binwidth = 0.1) +
-  labs(x = "Review Scores", y = "Frequency") 
+# Calculate mean price for each integer value of minimum stay
+mean_price_by_minimum_nights <- filtered_data %>%
+  group_by(minimum_nights) %>%
+  summarize(mean_price = mean(price, na.rm = TRUE))
+
+# Plot the mean price for each integer value of accommodates
+plot_2 <- ggplot(mean_price_by_minimum_nights, aes(x = minimum_nights, y = mean_price)) +
+  geom_point() +
+  geom_line(group = 1) +
+  labs(title = "Mean Price by Minimum Nights",
+       x = "Minimum Nights",
+       y = "Mean Price") +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 35)) 
+
+# Price - Room Type
+plot_3 <- ggplot(filtered_data, aes(x = room_type, y = price)) +
+  geom_boxplot(fill = "green") +
+  labs(x = "Room Type", y = "Price") 
+
+# Price - Review Scores
+plot_4 <- ggplot(filtered_data, aes(x = review_scores_rating, y = price))+
+  geom_point(size = 0.1) +
+  labs(x = "Overall Review Score", y = "Price") 
+
+grid_plot <- plot_grid(plot_1, plot_2, plot_3, plot_4, ncol = 1, rel_heights = c(1, 0.1, 1))
+print(grid_plot)
 ```
 
-Room type is split relatively evenly between entire home/apt and private room, with hotel room and shared room comprising very few of New York's AirBnB listings. The properties are concentrated in Manhattan and Brooklyn, each with more than double the number of listings Queens has; the Bronx and Staten Island have comparatively very few listings. And the average review score for each listing is heavily right-skewed, with very few listings at a sub-4 review score. More analysis of price follows in the Results section.
+&nbsp;
+
+These plots demonstrate that some of the variables that we think have a big impact on price, like accommodates and room type, have a clear (if noisy) relationship, while others are much less clear. For example, it's hard to tell if there's a downward relationship between minimum price and nights or if that's just noise in the dataset. And in the review score plot, there is so much mass in the square between 4 and 5 review score and \$0 and \$500 price that it's hard to see any relationship, other than with outliers.
+
+Given this initial glance at the dataset, it's clear that we will have our work cut out for us in trying to predict price. In the next section, we will describe the approach we took in order to build the best predictive model of price possible, despite the noise.
 
  
 
@@ -248,9 +305,9 @@ Finally, in order to map our selected model's performance in each neighborhood, 
 
 As an aside, we'd like to mention a couple of approaches to this question we tried that did not work, or did not prove useful, and are thus not included below. They include:
 
-* Completing all the same analysis, but for occupancy rate: Our original question was about predicting New York's AirBnB occupancy rate, in addition to price. However, occupancy rate was not a variable we had access to in the dataset, so we sought to construct the occupancy rate for each listing. We realized that the algorithm that others who have studied AirBnB's occupancy rates have used (monthly reviews x expected review rate x average stay length) relied on the faulty assumptions that expected review rate and stay length are constant for all listings in the dataset. Rather than using an algorithm based on such faulty assumptions, we decided to forgo our analysis of occupancy rate and instead limit our analysis to price.
+-   Completing all the same analysis, but for occupancy rate: Our original question was about predicting New York's AirBnB occupancy rate, in addition to price. However, occupancy rate was not a variable we had access to in the dataset, so we sought to construct the occupancy rate for each listing. We realized that the algorithm that others who have studied AirBnB's occupancy rates have used (monthly reviews x expected review rate x average stay length) relied on the faulty assumptions that expected review rate and stay length are constant for all listings in the dataset. Rather than using an algorithm based on such faulty assumptions, we decided to forgo our analysis of occupancy rate and instead limit our analysis to price.
 
-* Text analysis: We tried using the topic modeling technique of Latent Dirichlet Allocation (LDA) to extract key words and topics from the names and descriptions of the listings. However, upon performing this analysis, the topics were insufficiently differentiated from each other (e.g., four topics under the heading "apartment" in the top 10), and the coefficient of each topic was so low, that they yielded very little insight into predicted price.
+-   Topic Modeling: We tried using the topic modeling technique of Latent Dirichlet Allocation (LDA) to extract key words and topics from the names and descriptions of the listings. Unfortunately, upon performing this analysis, the topics were insufficiently differentiated from each other (e.g., four topics under the heading "apartment" in the top 10), and the coefficient of each topic was so low, that they yielded very little insight into predicted price and we excluded the results from this report. However, in a similar vein, we did pull out six key words from the amenities column and created new dummy variables to use as predictors in our models: pets_allowed, kitchen, heating, air_conditioning, elevator, and long_term_allowed.
 
 
 
@@ -258,37 +315,28 @@ As an aside, we'd like to mention a couple of approaches to this question we tri
 
 ## Results:
 
-### Preliminary Analysis of Price:
+### Understanding Price
 
-Price in our dataset is left-skewed; while some listings exceed \$1000 per night, 75% of listings are \$200 or less. 
+Price in our dataset is left-skewed; while some listings exceed \$1000 per night, 75% of listings are \$200 or less.
+
+&nbsp;
 
 ```{r 3}
 ## Understanding Price
+quartiles <- summary(filtered_data$price)
+quartiles
 
-# Filter the data to the price range between 0 and 1500 USD
-filtered_data <- NY_reduced[NY_reduced$price >= 0 & NY_reduced$price <= 1500, ]
-
-# How many data points did we remove for the filtered price dataset?
-total_observations <- nrow(NY_reduced)
-filtered_observations <- nrow(filtered_data)
-percentage_filtered <- (total_observations - filtered_observations) / total_observations * 100
-
-# We only lost ~0.4% of observations.
-
-# Calculate the mean price per neighborhood
-neighborhood_price <- filtered_data %>%
-  group_by(neighbourhood_cleansed) %>%
-  summarize(neighborhood_price = mean(price, na.rm = TRUE))
-
-filtered_data <- merge(filtered_data, neighborhood_price, by = "neighbourhood_cleansed")
-
-# Create a histogram using ggplot2
+# Create a histogram of price values
 ggplot(filtered_data, aes(x = price)) +
   geom_histogram(binwidth = 10, color = "black", fill = "blue") +
   labs(title = "Histogram of Price Values (0 - 1500 USD)", x = "Price", y = "Frequency")
 ```
 
+&nbsp;
+
 Manhattan has the most expensive listings, with a median nightly price of \$160. Brooklyn follows at \$119 per night; listings in the other boroughs have median nightly prices between \$80 and \$100. Each borough has quite a few upper outliers in price, as demonstrated by the boxplot below.
+
+&nbsp;
 
 ```{r 3.1}
 # Boxplot by neighborhood:
@@ -305,11 +353,15 @@ median_prices_neighborhood <- filtered_data %>%
 kable(median_prices_neighborhood)
 ```
 
+&nbsp;
+
 Below, we've included the median listing price across the city by room type and season. Hotel rooms are by far the most expensive, although they are the least common. Entire homes are more than twice as expensive as private rooms, and nearly three times as expensive as shared rooms.
 
 Season appears not to affect citywide median price much. The median price in each season ranges from \$120 in spring to \$130 in winter. Again, since we only have price data for one date per season, we lack the fine-grained price data that would be useful to identify bigger seasonal shifts, or price trends for each neighborhood (especially during e.g. big events or holidays). But for many listings in our dataset, the listed price was identical for each of the four dates of scraped data. It's possible that many AirBnB hosts don't change their prices much or at all from the default, although without better data this hypothesis is just speculation.
 
-At the borough level, there is a bit more seasonal variation in median price in some boroughs and less in others. The range of Staten Island's median price by season is 25, while the range of Queens's median price by season is just 4.5.
+At the borough level, there is more seasonal variation in median price in some boroughs, and less in others. The range of Staten Island's median price by season is 25, while the range of Queens's median price by season is just 4.5.
+
+&nbsp;
 
 ```{r 3.2}
 # Price by room type
@@ -344,7 +396,9 @@ kable(median_price_by_neighborhood_season)
 
 ### Building a Prediction Model
 
-The table below gives the RMSE of each model we tested. The best-performing model is the random forest model, which has a RMSE of 0.33; on average, this model is roughly 33% off of the true price.
+The table below gives the RMSE of each model we tested. The best-performing model is the random forest model, which has a RMSE of 0.326; on average, this model is roughly 32.6% off of the true price of a given listing.
+
+&nbsp;
 
 ```{r 4}
 ## Predicting Price ($0-1500)
@@ -353,9 +407,14 @@ filtered_data_split = initial_split(filtered_data, prop=0.8)
 filtered_data_train = training(filtered_data_split)
 filtered_data_test  = testing(filtered_data_split)
 
+lm_null <- lm(log_price ~ 1, data = filtered_data_train)
+
 lm2 <- lm(log_price ~ latitude*longitude + review_scores_rating + bedrooms +
             neighbourhood_group_cleansed + entire_home + shared_room + private_room, 
           data = filtered_data_train)
+
+lm3 <- lm(log_price ~ Pets_allowed + Kitchen + Elevator + Air_conditioning +
+            Heating + Long_term_allowed, data = filtered_data_train)
 
 #LASSO
 # create your own numeric feature matrix.
@@ -373,9 +432,11 @@ scbeta1 = coef(lasso1)
 scbeta1_nonzero <- which(scbeta1 != 0, arr.ind = TRUE)
 
 # Linear Model, (some) LASSO features
-lm_lasso1 <- lm(log_price ~ neighbourhood_group_cleansed +
-                  host_total_listings_count + bathrooms_text +
-                  number_of_reviews + entire_home + shared_room +
+lm_lasso1 <- lm(log_price ~ host_since + neighbourhood_group_cleansed + Kitchen +
+                  accommodates + spatial_cluster + minimum_nights + Elevator + 
+                  Air_conditioning + Heating + review_scores_rating + 
+                  host_total_listings_count + bathrooms_text + host_identity_verified +
+                  latitude * longitude + number_of_reviews + entire_home + shared_room +
                   reviews_per_month + review_scores_location + review_scores_value +
                   spring + fall, data = filtered_data_train)
 
@@ -392,6 +453,7 @@ BNB.tree1 = rpart(log_price ~ spatial_cluster + host_since +
 # random forest
 BNB.forest1 = randomForest(log_price ~ spatial_cluster + latitude*longitude + 
                              host_since + neighbourhood_group_cleansed +
+                             Air_conditioning + Heating + Kitchen + Elevator +
                              host_total_listings_count + accommodates + bedrooms +
                              minimum_nights + availability_30 + availability_90 +
                              reviews_per_month + review_scores_location +
@@ -401,9 +463,11 @@ BNB.forest1 = randomForest(log_price ~ spatial_cluster + latitude*longitude +
                              private_room + spring + summer + fall + winter,
                            data=filtered_data_train, importance=TRUE)
 
+
 # boosted model
 BNB.boost1 = gbm(log_price ~ spatial_cluster + latitude*longitude + host_since +
                    host_total_listings_count + accommodates + bedrooms + 
+                   Air_conditioning + Heating + Kitchen + Elevator +
                    minimum_nights + availability_30 + availability_90 +
                    review_scores_cleanliness + number_of_reviews + reviews_per_month +
                    review_scores_location + review_scores_value + review_scores_rating +
@@ -413,8 +477,11 @@ BNB.boost1 = gbm(log_price ~ spatial_cluster + latitude*longitude + host_since +
                  interaction.depth=6, n.trees=5000, shrinkage=.05, cv.folds = 2)
 
 # Root mean squared error - log price
-RMSE3 = tibble("model" = c("lm2", "lm_lasso1", "BNB.tree1", "BNB.forest1", "BNB.boost1"),
-               "RMSE" = c(rmse(lm2, filtered_data_test), 
+RMSE3 = tibble("model" = c("lm_null", "lm2", "lm3", "lm_lasso1", "BNB.tree1", 
+                           "BNB.forest1", "BNB.boost1"),
+               "RMSE" = c(rmse(lm_null, filtered_data_test), 
+                          rmse(lm2, filtered_data_test), 
+                          rmse(lm3, filtered_data_test), 
                           rmse(lm_lasso1, filtered_data_test), 
                           rmse(BNB.tree1, filtered_data_test), 
                           rmse(BNB.forest1, filtered_data_test), 
@@ -423,9 +490,13 @@ RMSE3.1 = kable(RMSE3, caption = "RMSE of each model (log price)")
 RMSE3.1
 ```
 
-Below, we see the variable importance plot. In general, the variables that have the most impact on the model are latitude & longitude (location), room type, minimum length of stay, number of guests the listing can accommodate, and reviews per month. The least important variables in our model are, strangely, the seasonal variables and the spatial clusters created by the DBSCAN clustering algorithm.
+&nbsp;
 
-```{r 4.1}
+Below, we see the variable importance plot. In general, the variables that have the most impact on the model are latitude & longitude (location), room type, minimum length of stay, number of guests the listing can accommodate, and reviews per month. The least important variables in our model are, in general, the seasonal variables and the amenity variables.
+
+&nbsp;
+
+```{r 4.1, fig.height=6}
 # Variable Importance:
 varImpPlot(BNB.forest1)
 ```
@@ -434,19 +505,27 @@ varImpPlot(BNB.forest1)
 
 ### Mapping
 
-Below, we see first the map of mean predicted price by neighborhood (converted back from log form for interpretability), followed by the map of actual mean price by neighborhood (not borough; recall that, while there are 5 boroughs in NYC, there are over 250 neighborhoods in our dataset). 
-
 ```{r 6}
 # Additional Data Manipulation
+# Calculate the mean price per neighborhood
+neighborhood_price <- filtered_data %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarize(neighborhood_price = mean(price, na.rm = TRUE))
+
+filtered_data <- merge(filtered_data, neighborhood_price, by = "neighbourhood_cleansed")
+
 # get predicted values for all listings
-forest1 = randomForest(log_price ~ spatial_cluster + latitude*longitude + host_since +
-                         neighbourhood_group_cleansed + host_total_listings_count +
-                         accommodates + bedrooms + minimum_nights + availability_30 +
-                         availability_90 + reviews_per_month + review_scores_location +
-                         number_of_reviews + review_scores_cleanliness +
-                         review_scores_value + review_scores_rating + instant_bookable +
-                         entire_home + shared_room + private_room + spring + summer +
-                         fall + winter, data=filtered_data, importance=TRUE)
+forest1 = randomForest(log_price ~ spatial_cluster + latitude*longitude + 
+                             host_since + neighbourhood_group_cleansed +
+                             Air_conditioning + Heating + Kitchen + Elevator +
+                             host_total_listings_count + accommodates + bedrooms +
+                             minimum_nights + availability_30 + availability_90 +
+                             reviews_per_month + review_scores_location +
+                             number_of_reviews + review_scores_cleanliness +
+                             review_scores_value + review_scores_rating +
+                             instant_bookable + entire_home + shared_room + 
+                             private_room + spring + summer + fall + winter,
+                         data=filtered_data, importance=TRUE)
 
 #add predictions to data
 filtered_data = filtered_data %>%
@@ -479,7 +558,13 @@ filtered_data <- filtered_data %>%
   mutate("percentErr1" = resid1/neighborhood_log_price)
 ```
 
-```{r 7}
+Here we see the maps of true neighborhood (not borough; recall that, while there are 5 boroughs in NYC, there are over 250 neighborhoods in our dataset) as coded in the dataset, versus spatial cluster as predicted by the DBSCAN algorithm.
+
+The spatial clusters do a reasonably good job of telling the difference between Manhattan, Brooklyn, and everywhere else, but they are not nearly as fine-grained as the true neighborhood from the dataset. This might explain why they are not a particularly important predictor of our random forest model.
+
+&nbsp;
+
+```{r 7, fig.width=6.5}
 ## Geography of Price
 library(plotly)
 
@@ -493,54 +578,107 @@ nyc_shapefile <- st_read(geojson_file, quiet=TRUE)
 nyc_shapefile2 <- nyc_shapefile %>%
   st_transform(crs = st_crs(filtered_data_sf))
 
-## Mapping Price
-# Predicted Price by Neighborhood
-ggplot() +
+## True Neighborhoods
+plot1 <- ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = neighborhood_pred_price_conv), size = .5) +
-  scale_color_gradientn(colours = viridisLite::viridis(10),
-                        limits = c(0, 400),
-                        name = "Predicted Price") +
+  geom_sf(data = filtered_data_sf, aes(color = neighbourhood_cleansed), size = .1) +
   theme_minimal() +
-  labs(title = "Predicted Price by Neighborhood",
-       subtitle = "Color gradient represents predicted price",
-       color = "Predicted Price")
+  labs(title = "True Neighborhoods",
+       color = "Neighborhood") +
+  theme(legend.position = "none")
+plot1
 ```
 
-```{r 7.1}
-# True Price by Neighborhood
-ggplot() +
+&nbsp;
+
+```{r 7.0.1, fig.width=6.5}
+## Spatial Clusters
+# Create the plot
+plot2 <- ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = neighborhood_price), size = .5) +
+  geom_sf(data = filtered_data_sf, aes(color = ifelse(spatial_cluster == 0, "pink",
+                                                      spatial_cluster)), size = .1) +
+  theme_minimal() +
+  labs(title = "Spatial Clusters (DBSCAN)",
+       color = "Cluster (if not in cluster, listing is pink)") +
+  theme(legend.position = "none")
+plot2
+```
+
+ 
+
+Below, we see first the map of mean predicted price by neighborhood (converted back from log form for interpretability), followed by the map of actual mean price by neighborhood.
+
+&nbsp;
+
+```{r 7.1, fig.width=6.5}
+## Mapping Price
+# Predicted Price by Neighborhood
+plot3 <- ggplot() +
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data_sf, aes(color = neighborhood_pred_price_conv), size = .1) +
+  scale_color_gradientn(colours = viridisLite::viridis(10),
+                        limits = c(0, 400),
+                        name = "Pred. Price") +
+  theme_minimal() +
+  labs(title = "Predicted Price by Neighborhood",
+       color = "Pred. Price") +
+  theme(legend.position = "bottom")
+plot3
+```
+
+&nbsp;
+
+```{r 7.1.1, fig.width=6.5}
+# True Price by Neighborhood
+plot4 <- ggplot() +
+  geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
+  geom_sf(data = filtered_data_sf, aes(color = neighborhood_price), size = .1) +
   scale_color_gradientn(colours = viridisLite::viridis(10),
                         limits = c(0, 400),
                         name = "True Price") +
   theme_minimal() +
   labs(title = "True Price by Neighborhood",
-       subtitle = "Color gradient represents true price",
-       color = "True Price")
+       color = "True Price") +
+  theme(legend.position = "bottom")
+plot4
 ```
 
-&nbsp;
+ 
 
 And below, we see the mean residual error rate of our model's predicted price in each neighborhood:
 
-```{r 7.2}
+&nbsp;
+
+```{r 7.2, fig.width=6.5}
 # Residual Error of Price
 ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = 100*percentErr1), size = .5) +
+  geom_sf(data = filtered_data_sf, aes(color = 100*percentErr1), size = .1) +
   scale_color_gradientn(colours = viridisLite::plasma(10),
                         name = "Residual Error Rate") +
   theme_minimal() +
   labs(title = "Residual Error Rate by Neighborhood - Log Price",
-       subtitle = "Color gradient represents residual error rate",
-       color = "Residual Error Rate")
+       color = "Residual Error Rate") + 
+  theme(legend.position = "bottom")
 ```
 
  
 
 ## Conclusion:
 *Interpret what you found. What are the main lessons we should take away from your report?*
+
+Why was random forest the best model?
+
+Why such a high RMSE?
+
+What variables were most and least important to the best performing model?
+
+What can hosts and travelers learn from those variables?
+
+Where did our model perform well and where did it perform less well?
+
+
+
 
 
