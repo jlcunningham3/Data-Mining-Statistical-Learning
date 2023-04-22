@@ -108,7 +108,8 @@ NY_Winter$host_since <- as.numeric(difftime(Data_collection_d, NY_Winter$host_si
 #merging seasons
 NY_BNB <- rbind(NY_Spring, NY_Summer, NY_Fall, NY_Winter)
 
-write.csv(NY_BNB, file = "/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/merged_data.csv", row.names = FALSE)
+write.csv(NY_BNB, file = "/Users/jack/Documents/GitHub/Data-Mining-Statistical-Learning/Final Project/merged_data.csv",
+          row.names = FALSE)
 
 #remove unused columns
 NY_BNB <- NY_BNB[, -c(2,3,4,5,8,9,10,11,12,14,15,16,17,18,19,20,21,22,23,
@@ -143,7 +144,8 @@ NY_BNB2 = NY_BNB2 %>%
   mutate (hotel_room = ifelse(room_type == "Hotel room", 1, 0))
 
 # amenities:
-words_to_search <- c("Pets allowed", "Kitchen", "Elevator", "Air conditioning", "Heating", "Long term stays allowed")
+words_to_search <- c("Pets allowed", "Kitchen", "Elevator", "Air conditioning", 
+                     "Heating", "Long term stays allowed")
 NY_BNB2 <- NY_BNB2 %>%
   mutate(Pets_allowed = as.integer(grepl(words_to_search[1], amenities)),
          Kitchen = as.integer(grepl(words_to_search[2], amenities)),
@@ -240,7 +242,7 @@ The plots that follow give a sense of how price relates to some of the important
 
 &nbsp;
 
-```{r 2, fig.width=6.5}
+```{r 2, fig.height=3.5}
 ## Understanding the Data
 # Calculate mean price for each integer value of accommodates
 mean_price_by_accommodates <- filtered_data %>%
@@ -281,8 +283,25 @@ plot_4 <- ggplot(filtered_data, aes(x = review_scores_rating, y = price))+
   geom_point(size = 0.1) +
   labs(x = "Overall Review Score", y = "Price") 
 
-grid_plot <- plot_grid(plot_1, plot_2, plot_3, plot_4, ncol = 1, rel_heights = c(1, 0.1, 1))
-print(grid_plot)
+plot_1
+```
+
+&nbsp;
+
+```{r 2.1, fig.height=3.5}
+plot_2
+```
+
+&nbsp;
+
+```{r 2.2, fig.height=3.5}
+plot_3
+```
+
+&nbsp;
+
+```{r 2.3, fig.height=3.5}
+plot_4
 ```
 
 &nbsp;
@@ -339,29 +358,23 @@ Manhattan has the most expensive listings, with a median nightly price of \$160.
 &nbsp;
 
 ```{r 3.1}
-# Boxplot by neighborhood:
-ggplot(filtered_data, aes(x = neighbourhood_group_cleansed, y = price)) +
-  geom_boxplot(color = "black", fill = "blue") +
-  labs(title = "Boxplot of Price by Neighborhood Group", 
-       x = "Neighborhood Group", y = "Price")
-
 # Price by neighborhood
 median_prices_neighborhood <- filtered_data %>%
   group_by(neighbourhood_group_cleansed) %>%
   summarize(median_price = median(price))
 
 kable(median_prices_neighborhood)
+
+# Boxplot by neighborhood:
+ggplot(filtered_data, aes(x = neighbourhood_group_cleansed, y = price)) +
+  geom_boxplot(color = "black", fill = "blue") +
+  labs(title = "Boxplot of Price by Neighborhood Group", 
+       x = "Neighborhood Group", y = "Price")
 ```
 
 &nbsp;
 
 Below, we've included the median listing price across the city by room type and season. Hotel rooms are by far the most expensive, although they are the least common. Entire homes are more than twice as expensive as private rooms, and nearly three times as expensive as shared rooms.
-
-Season appears not to affect citywide median price much. The median price in each season ranges from \$120 in spring to \$130 in winter. Again, since we only have price data for one date per season, we lack the fine-grained price data that would be useful to identify bigger seasonal shifts, or price trends for each neighborhood (especially during e.g. big events or holidays). But for many listings in our dataset, the listed price was identical for each of the four dates of scraped data. It's possible that many AirBnB hosts don't change their prices much or at all from the default, although without better data this hypothesis is just speculation.
-
-At the borough level, there is more seasonal variation in median price in some boroughs, and less in others. The range of Staten Island's median price by season is 25, while the range of Queens's median price by season is just 4.5.
-
-&nbsp;
 
 ```{r 3.2}
 # Price by room type
@@ -370,7 +383,17 @@ median_prices_room_type <- NY_reduced %>%
   summarize(median_price = median(price))
 
 kable(median_prices_room_type)
+```
 
+&nbsp;
+
+Season appears not to affect citywide median price much. The median price in each season ranges from \$120 in spring to \$130 in winter. Again, since we only have price data for one date per season, we lack the fine-grained price data that would be useful to identify bigger seasonal shifts, or price trends for each neighborhood (especially during e.g. big events or holidays). But for many listings in our dataset, the listed price was identical for each of the four dates of scraped data. It's possible that many AirBnB hosts don't change their prices much or at all from the default, although without better data this hypothesis is just speculation.
+
+At the borough level, there is more seasonal variation in median price in some boroughs, and less in others. The range of Staten Island's median price by season is 25, while the range of Queens's median price by season is just 4.5.
+
+&nbsp;
+
+```{r 3.3}
 # Price by season
 # Compute the mean price for each season
 median_price_by_season <- NY_reduced %>%
@@ -492,13 +515,56 @@ RMSE3.1
 
 &nbsp;
 
-Below, we see the variable importance plot. In general, the variables that have the most impact on the model are latitude & longitude (location), room type, minimum length of stay, number of guests the listing can accommodate, and reviews per month. The least important variables in our model are, in general, the seasonal variables and the amenity variables.
+Below, we see two variable importance plots; the first represents the increase in node purity from each variable, and the second represents the percent increase in MSE if that variable is omitted. In general, the variables that have the most impact on the model are latitude & longitude (location), room type, minimum length of stay, number of guests the listing can accommodate, and reviews per month. The least important variables in our model are, in general, the seasonal variables and the amenity variables.
 
 &nbsp;
 
-```{r 4.1, fig.height=6}
+```{r 4.1, fig.height=3.5}
 # Variable Importance:
-varImpPlot(BNB.forest1)
+##varImpPlot(BNB.forest1)
+imp <- importance(BNB.forest1)
+imp_df <- data.frame(Var = rownames(imp), Importance = imp[, "IncNodePurity"], stringsAsFactors = FALSE)
+long_imp <- reshape2::melt(imp_df, id.vars = "Var")
+
+# Convert the importance data frame to a long format
+long_imp <- reshape2::melt(imp_df, id.vars = "Var")
+
+# Create the plot
+clean_varimp_plot <- ggplot(long_imp, aes(x = reorder(Var, value), y = value, fill = Var)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "none") +
+  xlab("Variable") +
+  ylab("Importance (IncNodePurity)")
+
+# Show the plot
+print(clean_varimp_plot)
+```
+
+&nbsp;
+
+```{r 4.2, fig.height=3.5}
+# Variable Importance:
+##varImpPlot(BNB.forest1)
+imp_df1 <- data.frame(Var = rownames(imp), Importance = imp[, "%IncMSE"], stringsAsFactors = FALSE)
+long_imp1 <- reshape2::melt(imp_df1, id.vars = "Var")
+
+# Create the plot
+clean_varimp_plot1 <- ggplot(long_imp1, aes(x = reorder(Var, value), y = value, fill = Var)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "none") +
+  xlab("Variable") +
+  ylab("Importance (%IncMSE)")
+
+# Show the plot
+print(clean_varimp_plot1)
 ```
 
  
@@ -564,7 +630,7 @@ The spatial clusters do a reasonably good job of telling the difference between 
 
 &nbsp;
 
-```{r 7, fig.width=6.5}
+```{r 7, fig.height=4}
 ## Geography of Price
 library(plotly)
 
@@ -581,7 +647,7 @@ nyc_shapefile2 <- nyc_shapefile %>%
 ## True Neighborhoods
 plot1 <- ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = neighbourhood_cleansed), size = .1) +
+  geom_sf(data = filtered_data_sf, aes(color = neighbourhood_cleansed), size = .2) +
   theme_minimal() +
   labs(title = "True Neighborhoods",
        color = "Neighborhood") +
@@ -591,13 +657,13 @@ plot1
 
 &nbsp;
 
-```{r 7.0.1, fig.width=6.5}
+```{r 7.0.1, fig.height=4}
 ## Spatial Clusters
 # Create the plot
 plot2 <- ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
   geom_sf(data = filtered_data_sf, aes(color = ifelse(spatial_cluster == 0, "pink",
-                                                      spatial_cluster)), size = .1) +
+                                                      spatial_cluster)), size = .2) +
   theme_minimal() +
   labs(title = "Spatial Clusters (DBSCAN)",
        color = "Cluster (if not in cluster, listing is pink)") +
@@ -611,36 +677,34 @@ Below, we see first the map of mean predicted price by neighborhood (converted b
 
 &nbsp;
 
-```{r 7.1, fig.width=6.5}
+```{r 7.1, fig.height=4}
 ## Mapping Price
 # Predicted Price by Neighborhood
 plot3 <- ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = neighborhood_pred_price_conv), size = .1) +
+  geom_sf(data = filtered_data_sf, aes(color = neighborhood_pred_price_conv), size = .2) +
   scale_color_gradientn(colours = viridisLite::viridis(10),
                         limits = c(0, 400),
                         name = "Pred. Price") +
   theme_minimal() +
   labs(title = "Predicted Price by Neighborhood",
-       color = "Pred. Price") +
-  theme(legend.position = "bottom")
+       color = "Pred. Price")
 plot3
 ```
 
 &nbsp;
 
-```{r 7.1.1, fig.width=6.5}
+```{r 7.1.1, fig.height=4}
 # True Price by Neighborhood
 plot4 <- ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = neighborhood_price), size = .1) +
+  geom_sf(data = filtered_data_sf, aes(color = neighborhood_price), size = .2) +
   scale_color_gradientn(colours = viridisLite::viridis(10),
                         limits = c(0, 400),
                         name = "True Price") +
   theme_minimal() +
   labs(title = "True Price by Neighborhood",
-       color = "True Price") +
-  theme(legend.position = "bottom")
+       color = "True Price")
 plot4
 ```
 
@@ -650,17 +714,16 @@ And below, we see the mean residual error rate of our model's predicted price in
 
 &nbsp;
 
-```{r 7.2, fig.width=6.5}
+```{r 7.2, fig.height=4}
 # Residual Error of Price
 ggplot() +
   geom_sf(data = nyc_shapefile2, fill = "lightgray", color = "black", size = 0.2) +
-  geom_sf(data = filtered_data_sf, aes(color = 100*percentErr1), size = .1) +
+  geom_sf(data = filtered_data_sf, aes(color = 100*percentErr1), size = .2) +
   scale_color_gradientn(colours = viridisLite::plasma(10),
                         name = "Residual Error Rate") +
   theme_minimal() +
   labs(title = "Residual Error Rate by Neighborhood - Log Price",
-       color = "Residual Error Rate") + 
-  theme(legend.position = "bottom")
+       color = "Residual Error Rate")
 ```
 
  
