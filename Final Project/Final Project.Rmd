@@ -186,7 +186,13 @@ view(filtered_data)
 
 ## Abstract:
 
-*summarize your question, your methods, your results, and your main conclusions in a few hundred words or less.*
+In this project, we aimed to predict the price of New York City AirBnB listings using various machine learning models. The random forest model performed the best, with an RMSE of 0.326, despite the inherent challenges in predicting a variable with many upper outliers. Our model identified four main categories of features that best predict price: location, property type, minimum stay requirements, and host-specific features.
+
+Although the random forest model outperformed other methods, it still had a relatively high RMSE, likely due to potential issues with both the model itself and the data. Nonlinear relationships, missing interactions between features, and issues in feature selection might have contributed to the model's error. Additionally, limitations in capturing location information and seasonality may have hindered the model's predictive power.
+
+The model performed particularly well in most of Manhattan above Midtown and in most of Brooklyn outside of Downtown Brooklyn, while it struggled in sparse areas on the outskirts of the city and in the most expensive areas of Lower Manhattan and Downtown Brooklyn. The analysis showed that seasonal factors and certain amenities had minimal impact on price.
+
+Our findings provide valuable insights for both AirBnB hosts and travelers. Hosts should focus on property location, type, minimum stay requirements, and maintaining a good reputation to optimize their pricing strategy. Travelers can use this information to compare similar listings, prioritize important features, and find the best value for their money. However, due to the limited number of price data points and the relatively high error rate of our model, both hosts and travelers should interpret these findings with caution.
 
  
 
@@ -322,13 +328,112 @@ Then, we turned to more sophisticated machine learning techniques: random tree, 
 
 Finally, in order to map our selected model's performance in each neighborhood, we first added the predicted price values from the random forest model to the dataset for each listing. Then, we calculated the mean predicted price in each of the 235 distinct New York City neighborhoods in our dataset, along with the actual mean prices for each neighborhood, and calculated the error rate. Finally, we plotted all three of these measures for each listing by latitude and longitude, along with NYC's geographic boundaries.
 
+### Excluded Approaches
+
 As an aside, we'd like to mention a couple of approaches to this question we tried that did not work, or did not prove useful, and are thus not included below. They include:
 
 -   Completing all the same analysis, but for occupancy rate: Our original question was about predicting New York's AirBnB occupancy rate, in addition to price. However, occupancy rate was not a variable we had access to in the dataset, so we sought to construct the occupancy rate for each listing. We realized that the algorithm that others who have studied AirBnB's occupancy rates have used (monthly reviews x expected review rate x average stay length) relied on the faulty assumptions that expected review rate and stay length are constant for all listings in the dataset. Rather than using an algorithm based on such faulty assumptions, we decided to forgo our analysis of occupancy rate and instead limit our analysis to price.
 
 -   Topic Modeling: We tried using the topic modeling technique of Latent Dirichlet Allocation (LDA) to extract key words and topics from the names and descriptions of the listings. Unfortunately, upon performing this analysis, the topics were insufficiently differentiated from each other (e.g., four topics under the heading "apartment" in the top 10), and the coefficient of each topic was so low, that they yielded very little insight into predicted price and we excluded the results from this report. However, in a similar vein, we did pull out six key words from the amenities column and created new dummy variables to use as predictors in our models: pets_allowed, kitchen, heating, air_conditioning, elevator, and long_term_allowed.
 
+* PCA: 
 
+Principal component analysis (PCA) is a technique used to obtain reduced-dimensional representations of high-dimensional data sets. In the case of our model, which has 48 features, we were motivated to explore the effectiveness of PCA in summarizing the data. We experimented with PCA using two different approaches. 
+
+In the first approach, we applied PCA to all of the numerical variables, reducing the dimensionality to rank=8. We then used these 8 variables to estimate prices using a random forest model. However, the RMSE of this model tended to be higher than 0.4, which is not acceptable.
+
+In our second approach, we categorized the features into two groups based on their relevance to hosting and the physical place. The first category included host-specific features such as "host_since", "host_total_listings_count", "host_identity_verified", and others. The second category included place-specific features such as "bedrooms", "room_type", "accommodates", and others. We then applied PCA separately to each category, with rank equal to 3 for the host-related features and rank equal to 5 for the place-related features. We used these reduced-dimensional representations in a random forest model to estimate prices. According to our simulations, the RMSE results were between 0.36 to 0.38.
+
+Although the accuracy of neither approach was better than the overall model, the second method, which utilized only 8 variables, yielded a RMSE that was relatively close to the best result. This suggests that reducing the dimensionality of the place-related features using PCA may have some potential in improving the model's performance. (If you'd like to reproduce our analysis, we included our PCA code as comments in the code block below; simply remove the first # from each line of code.)
+
+```{r 2.4}
+##### for PCA
+# set.seed(5)
+# filtered_data2 <- filtered_data %>% select(where(is.integer) | where(is.logical) | where(is.numeric))
+
+# price_columns <- filtered_data2[, c("price", "log_price")]
+
+# filtered_data2 <- filtered_data2 %>% select(-price, -log_price, -id) 
+
+### principal component regression
+# PCA1 = prcomp(filtered_data2, scale=TRUE, rank=8)
+# summary(PCA1)
+# P1=PCA1$x
+# PCA1_data <- data.frame(P1)
+# price_data <- data.frame(price_columns)
+# PCA1_data <- merge(PCA1_data, price_data, by = 'row.names')
+# PCA1_data$Row.names <- NULL
+
+# PCA1_split =  initial_split(PCA1_data, prop=0.8)
+# PCA1_train = training(PCA1_split)
+# PCA1_test  = testing(PCA1_split)
+
+### random forest
+# BNB.forest2 = randomForest(log_price ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8, data=PCA1_train, importance=TRUE)
+# modelr::rmse(BNB.forest2, PCA1_test)
+
+### Extract the columns that are relevant to host 
+# host_relevant_columns <- filtered_data2[, c("host_since", "host_total_listings_count", "host_identity_verified", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "review_scores_communication", "instant_bookable", "number_of_reviews")]
+
+### Extract the columns that are relevant to place 
+# place_relevant_columns <- filtered_data2[, c( "latitude", "longitude", "accommodates", "bedrooms", "beds", "shared_room", "private_room", "entire_home", "hotel_room", "Kitchen", "Elevator", "Air_conditioning", "Heating")]
+
+### Now look at PCA  
+# PCA_host = prcomp(host_relevant_columns, scale=TRUE, rank=3)
+# summary(PCA_host)
+
+# PCA_place = prcomp(place_relevant_columns, scale=TRUE, rank=5)
+# summary(PCA_place)
+
+# P2=PCA_host$x
+# P3=PCA_place$x
+
+# PCA_host_d <- data.frame(P2)
+# PCA_place_d <- data.frame(P3)
+
+# PCA2_data = merge(PCA_host_d, PCA_place_d, by = 'row.names')
+
+### Add row.names as a separate column in each data frame
+# price_data$Row.names <- row.names(price_data)
+
+### Merge data frames by row.names
+# PCA2_data <- merge(PCA2_data, price_data, by = 'Row.names')
+
+### Remove the redundant Row.names column
+# PCA2_data$Row.names <- NULL
+# head(PCA2_data)
+
+# PCA2_split =  initial_split(PCA2_data, prop=0.8)
+# PCA2_train = training(PCA2_split)
+# PCA2_test  = testing(PCA2_split)
+
+### random forest
+# BNB.forest3 = randomForest(log_price ~ PC1.x + PC2.x + PC3.x + PC1.y + PC2.y + PC3.y + PC4 + PC5, data=PCA2_train, importance=TRUE)
+# modelr::rmse(BNB.forest3, PCA2_test)
+
+#######
+### here we have different correlation plots, but I dont think they are helpful:
+# host_correlation_matrix <- cor(host_relevant_columns)
+# place_correlation_matrix <- cor(place_relevant_columns)
+
+# ggcorrplot(host_correlation_matrix,
+           # hc.order = TRUE, # Reorder variables based on hierarchical clustering
+           # type = "full", # Show full correlation coefficients
+           # lab = TRUE, # Show correlation coefficient values on the plot
+           # lab_size = 4, # Set font size for correlation coefficient values
+           # tl.cex = 12, # Set font size for variable names
+           # colors = c("#3c7e9e", "white", "#d93a48"), # Set color palette for positive, neutral, and negative correlations
+           # title = "Correlation Plot for host_relevant_columns Matrix") 
+
+# ggcorrplot(place_correlation_matrix,
+           # hc.order = TRUE, 
+           # type = "full",
+           # lab = TRUE, 
+           # lab_size = 4, 
+           # tl.cex = 12, 
+           # colors = c("#3c7e9e", "white", "#d93a48"), 
+           # title = "Correlation Plot for Relevant Columns") 
+```
 
  
 
@@ -729,19 +834,28 @@ ggplot() +
  
 
 ## Conclusion:
-*Interpret what you found. What are the main lessons we should take away from your report?*
 
-Why was random forest the best model?
+Of all the models we examined to predict the price of New York City's AirBnBs, the random forest model produced the best results, with an RMSE of about 0.326. There are a few potential reasons random forest worked better than other methods. By using ensemble learning to average the predictions of individual trees, the random forest model reduces the risk of overfitting. Also, by bootstrap aggregating multiple decision trees, the random forest method increases the model's diversity and robustness and reduces the variance in the predictions. Finally, by selecting a random subset of features at each split, random forest introduces additional diversity into the model, which helps to minimize overfitting and improve the generalization of the model to new data.
 
-Why such a high RMSE?
+In spite of these factors, we ended up with a relatively high RMSE: our model's predicted price was, on average, 32.6% off the true price of the listing. There are several possible reasons for this high RMSE. The first subset of potential issues is with the model itself. There might be a nonlinear relationship between some or many of the predictors and price, which is not accounted for in our model. We only included one interaction term, latitude x longitude; if there are other important interactions between features, our model does not capture them. And while we tried several different combinations of features in our random forest model, there could still be issues in feature selection that increase the model's error.
 
-What variables were most and least important to the best performing model?
+Another subset of potential issues is with the data itself. As seen above, price is a variable with a lot of upper outliers in our dataset; even after limiting the dataset to listings with price between \$0 and \$1500, 75% of listings fall into the range between \$0 and \$200, with the rest above. This is a significant challenge for any model to accurately predict price. Our model might also not be capturing location as well as necessary. The location of the listing is an extremely important factor in its price, as seen in the maps above. Our model considered neighborhood group, spatial cluster, and the interaction between latitude and longitude; still, these are relatively crude proxies for location, and a more precise geographic variable would have been desired.
 
-What can hosts and travelers learn from those variables?
+The most important variables in our model, in terms of both node purity and impact on RMSE, included location (latitude & longitude, spatial_cluster), entire_home, private_room, bedrooms, minimum_nights, and host-specific features like review_scores_rating and host_since. We posit that there are four categories of features that best predict price:
 
-Where did our model perform well and where did it perform less well?
+* Location: There is a wide spread between the mean price for a neighborhood like Midtown Manhattan and one like, say, Jackson Heights, Queens or West Bronx. Proximity to tourist attractions and conference centers, crime rates, transit access, real estate cost, and other factors make some neighborhoods much more desirable than others; that comes with a price premium.
 
+* Property type: Hosts charge much more for entire homes than they do for private or shared rooms, likely because travelers see having access to an entire home as an important amenity that they are willing to pay more for. And the number of bedrooms and guests that a listing accommodates are also important; travelers are willing to pay more per night for a listing that hosts more people.
 
+* Minimum nights: Some hosts seem to aim their listings at tourists, with minimum stay lengths between 1 and 5 nights; others aim their listings at longer-stay travelers or subletters, with minimum stay lengths of 30 nights or longer. The latter listings likely have a lower price per night than the former, since these travellers are "buying in bulk."
 
+* Host-specific features: Some features, like review scores and how long a host has been on AirBnB, are endogenous to the hosts. Travelers might be willing to pay more for a listing with higher review scores or a listing that has been active for longer. And hosts might "learn by doing," setting higher prices as they gain experience and better reviews.
 
+The features that are least important to predicting price in our model, in general, are those relating to season (spring, summer, fall, and winter) and those relating to amenities (heating, air conditioning, kitchen, etc.). For seasonality, this could be related to the shortcoming of our data that we only have the price for one day in each season, rather than daily price every day for a year. We could be missing important intra-seasonal shifts in price. However, this concern is mitigated by the fact that most listings for which we have four observations had identical prices at all four times; this suggests that many hosts simply keep the same price throughout much or all of the year. And for amenities, 90% of listings included a kitchen, 78% had heating, and 68% had air conditioning; one hypothesis is that since so many listings include these amenities, on the margin they do not impact price much.
+
+In terms of the relative predictive value of our model in different New York neighborhoods, it performed particularly well in most of Manhattan above Midtown, and in most of Brooklyn outside of Downtown Brooklyn. It performed less well in sparse areas on the outskirts of the city, including the furthest reaches of Staten Island and Queens, and in the most expensive areas of Lower Manhattan and Downtown Brooklyn. We hypothesize that the low density of listings in the outermost areas of the city gave our model a hard time, and that our model was also insufficiently sensitive to location to capture the high prices of the most desirable AirBnB locations in New York. 
+
+These findings might prove useful to NYC's AirBnB hosts and travelers alike. Hosts can learn that the location of their property, property type, minimum stay requirements, and their own reputation as a host are crucial factors in determining the price they can set for their listings. To maximize their earnings, hosts should focus on providing a clean, comfortable, and well-maintained property that caters to their target market, whether it be short-term tourists or longer-term renters. They should also strive to maintain high review scores and promptly address any concerns raised by guests. However, we caution against hosts reading too much into our model. It is most relevant for hosts who have had a NYC listing for at least a year, and the relatively high error rate of our model might indicate that there are factors beyond what our model considered that are important in setting price.
+
+Travelers can learn from these findings that location, property type, and host-specific features are significant determinants of the price they can expect to pay for an Airbnb accommodation. When searching for a suitable place to stay, travelers should compare listings with similar attributes, such as the number of bedrooms or guest capacity to identify potential deals and make more informed decisions about where to stay. Finally, understanding that seasonal factors and certain amenities may not have a substantial impact on price can help travelers find the best value for their money. This is especially true if AirBnB listing prices are less responsive to season than hotels; in this case, AirBnBs might prove to be better deals on the margin than hotels during "high seasons", and worse deals on the margin during "low seasons." Again, travelers should be cautioned about the limited number of price data points, and the relatively high error rate of our model, and take these findings with a grain of salt.
 
